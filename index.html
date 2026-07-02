@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+<!-- ════════════════════════════════════════════════════════════════════
+     BROWSER TAB TITLE  ·  change it to your shop/closet name
+     ════════════════════════════════════════════════════════════════════ -->
+<title>BPM closet · Wardrobe</title>
+<meta name="description" content="Browse available items. Filter by brand, size, category and price." />
+
+<!-- FAVICON (minimal clothes hanger in SVG, no separate file needed) -->
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M16 6a2.6 2.6 0 0 0-1 5l.02 1.4L5 18.6a2.4 2.4 0 0 0-1 1.9V22a2 2 0 0 0 2 2h20a2 2 0 0 0 2-2v-1.5a2.4 2.4 0 0 0-1-1.9L18 12.4 18 11A2.6 2.6 0 0 0 16 6Z' fill='none' stroke='%231b1b19' stroke-width='1.8' stroke-linejoin='round'/%3E%3C/svg%3E" />
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;450;500;600&display=swap" rel="stylesheet" />
+
+<style>
+:root{
+  --bg:#FAFAF7; --surface:#FFFFFF; --surface-2:#F4F3EF;
+  --ink:#1B1B19; --muted:#76746E; --line:#E6E4DD;
+  --accent:#3F5246; --accent-soft:#EAEFE9; --on-accent:#FFFFFF;
+  --sold:#9B9893; --amber:#9A6A20; --amber-soft:#F5EBD8;
+  --shadow:0 1px 2px rgba(20,20,18,.04), 0 8px 24px -12px rgba(20,20,18,.18);
+  --radius:12px; --maxw:1320px;
+  --serif:"Fraunces",Georgia,serif;
+  --sans:"Inter",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+}
+[data-theme="dark"]{
+  --bg:#131311; --surface:#1B1B18; --surface-2:#232320;
+  --ink:#F2F1EC; --muted:#A3A199; --line:#2D2D29;
+  --accent:#8FAA8C; --accent-soft:#222a22; --on-accent:#15170F;
+  --sold:#6E6C66; --amber:#D2A35A; --amber-soft:#2c2415;
+  --shadow:0 1px 2px rgba(0,0,0,.3), 0 10px 30px -14px rgba(0,0,0,.6);
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0; background:var(--bg); color:var(--ink); font-family:var(--sans); font-size:15px; line-height:1.5; font-feature-settings:"cv05","ss01"; -webkit-font-smoothing:antialiased}
+*:focus-visible{outline:2px solid var(--accent); outline-offset:2px; border-radius:4px}
+img{display:block; max-width:100%}
+button{font-family:inherit; cursor:pointer}
+.wrap{max-width:var(--maxw); margin:0 auto; padding:0 18px}
+
+header.top{position:sticky; top:0; z-index:30; background:color-mix(in srgb,var(--bg) 88%,transparent); backdrop-filter:saturate(1.4) blur(10px); border-bottom:1px solid var(--line)}
+.top .wrap{display:flex; align-items:center; gap:14px; height:62px}
+.brand{font-family:var(--serif); font-weight:500; font-size:23px; letter-spacing:-.01em; line-height:1; display:flex; align-items:baseline; gap:.45ch; text-decoration:none; color:inherit}
+.brand em{font-style:italic; color:var(--accent)}
+.brand-dot{font-size:11px; color:var(--muted); font-family:var(--sans); font-weight:500; letter-spacing:.12em; text-transform:uppercase; transform:translateY(-1px)}
+.top .spacer{flex:1}
+.icon-btn{display:inline-flex; align-items:center; justify-content:center; gap:7px; height:38px; min-width:38px; padding:0 12px; border:1px solid var(--line); background:var(--surface); color:var(--ink); border-radius:99px; font-size:13.5px; font-weight:500; transition:border-color .15s, background .15s, transform .05s}
+.icon-btn:hover{border-color:var(--ink)}
+.icon-btn:active{transform:scale(.97)}
+.icon-btn svg{width:17px; height:17px; flex:none}
+.icon-btn .lbl{display:none}
+@media(min-width:560px){.icon-btn .lbl{display:inline}}
+
+.controls{padding-top:18px}
+.searchrow{display:flex; gap:10px; align-items:center}
+.search{position:relative; flex:1}
+.search svg{position:absolute; left:13px; top:50%; transform:translateY(-50%); width:18px; height:18px; color:var(--muted)}
+.search input{width:100%; height:46px; padding:0 14px 0 40px; border:1px solid var(--line); background:var(--surface); color:var(--ink); border-radius:99px; font-size:15px}
+.search input::placeholder{color:var(--muted)}
+.btn-filters{display:inline-flex}
+@media(min-width:860px){.btn-filters{display:none}}
+select.field, .pricebox input{height:42px; border:1px solid var(--line); background:var(--surface); color:var(--ink); border-radius:99px; padding:0 34px 0 14px; font-size:13.5px; font-weight:500; appearance:none; -webkit-appearance:none; min-width:0; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M2 4l4 4 4-4' stroke='%2376746E' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 13px center}
+.filterbar{display:flex; flex-wrap:wrap; gap:9px; align-items:center; margin-top:14px}
+@media(max-width:859px){.filterbar{display:none; flex-direction:column; align-items:stretch}.filterbar.open{display:flex}.filterbar select.field, .filterbar .pricebox{width:100%}}
+.pricebox{display:inline-flex; align-items:center; gap:6px; border:1px solid var(--line); background:var(--surface); border-radius:99px; padding:0 8px 0 14px; height:42px}
+.pricebox span{font-size:13px; color:var(--muted); font-weight:500}
+.pricebox input{width:62px; height:40px; border:none; background:transparent; color:var(--ink); font-size:13.5px; padding:0; text-align:center}
+.pricebox input::-webkit-outer-spin-button,.pricebox input::-webkit-inner-spin-button{-webkit-appearance:none; margin:0}
+.toggle{display:inline-flex; align-items:center; gap:8px; font-size:13.5px; font-weight:500; color:var(--ink); user-select:none; cursor:pointer; height:42px; padding:0 4px}
+.toggle input{position:absolute; opacity:0; width:0; height:0}
+.switch{width:38px; height:22px; border-radius:99px; background:var(--line); position:relative; transition:background .18s; flex:none}
+.switch::after{content:""; position:absolute; top:2px; left:2px; width:18px; height:18px; border-radius:50%; background:#fff; box-shadow:0 1px 3px rgba(0,0,0,.25); transition:transform .18s}
+.toggle input:checked + .switch{background:var(--accent)}
+.toggle input:checked + .switch::after{transform:translateX(16px)}
+.btn-clear{border:none; background:transparent; color:var(--muted); font-size:13px; font-weight:500; text-decoration:underline; text-underline-offset:3px; padding:6px 4px}
+.btn-clear:hover{color:var(--ink)}
+
+.chips{display:flex; gap:8px; overflow-x:auto; padding:16px 0 4px; margin:0 -2px; scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:none; border:1px solid var(--line); background:var(--surface); color:var(--ink); border-radius:99px; padding:7px 14px; font-size:13px; font-weight:500; white-space:nowrap; transition:.15s}
+.chip .n{color:var(--muted); margin-left:5px; font-variant-numeric:tabular-nums}
+.chip:hover{border-color:var(--ink)}
+.chip.active{background:var(--accent); border-color:var(--accent); color:var(--on-accent)}
+.chip.active .n{color:color-mix(in srgb,var(--on-accent) 70%,transparent)}
+
+.resultline{display:flex; align-items:center; justify-content:space-between; gap:12px; margin:22px 0 14px}
+.count{font-size:14px; color:var(--muted)}
+.count b{color:var(--ink); font-weight:600; font-variant-numeric:tabular-nums}
+.viewtoggle{display:inline-flex; border:1px solid var(--line); border-radius:99px; background:var(--surface); padding:3px}
+.viewtoggle button{border:none; background:transparent; width:34px; height:30px; border-radius:99px; color:var(--muted); display:inline-flex; align-items:center; justify-content:center}
+.viewtoggle button.active{background:var(--accent-soft); color:var(--accent)}
+.viewtoggle svg{width:17px; height:17px}
+
+.grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(168px,1fr)); gap:14px 14px}
+@media(min-width:560px){.grid{gap:22px 18px; grid-template-columns:repeat(auto-fill,minmax(210px,1fr))}}
+.card{cursor:pointer; border:none; background:transparent; padding:0; text-align:left; color:inherit; width:100%}
+.thumb{position:relative; aspect-ratio:3/4; border-radius:var(--radius); overflow:hidden; background:var(--surface-2); border:1px solid var(--line)}
+.thumb img{width:100%; height:100%; object-fit:cover; opacity:0; transition:opacity .4s ease, transform .5s ease}
+.thumb img.loaded{opacity:1}
+.card:hover .thumb img.loaded{transform:scale(1.04)}
+.badge{position:absolute; top:9px; left:9px; z-index:2; font-size:10.5px; font-weight:600; letter-spacing:.06em; text-transform:uppercase; padding:5px 9px; border-radius:99px; backdrop-filter:blur(4px)}
+.badge.sold{background:rgba(20,20,18,.78); color:#fff}
+.badge.reserved{background:var(--amber-soft); color:var(--amber)}
+.badge.new{background:var(--accent); color:var(--on-accent); top:auto; bottom:9px}
+.card.is-sold .thumb img{filter:grayscale(.9) opacity(.6)}
+.card.is-sold .thumb{border-style:dashed}
+.meta{padding:11px 2px 0}
+.meta .name{font-size:14px; font-weight:500; line-height:1.3; overflow:hidden; display:-webkit-box; -webkit-line-clamp:1; -webkit-box-orient:vertical}
+.meta .brand{font-size:11.5px; color:var(--muted); text-transform:uppercase; letter-spacing:.07em; margin-top:3px; font-weight:500}
+.meta .foot{display:flex; align-items:center; justify-content:space-between; margin-top:9px; gap:8px}
+.price{font-size:15px; font-weight:600; font-variant-numeric:tabular-nums}
+.price.sold{color:var(--sold); text-decoration:line-through; text-decoration-thickness:1px}
+.size-pill{font-size:11px; font-weight:600; color:var(--ink); background:var(--surface-2); border:1px solid var(--line); padding:3px 8px; border-radius:6px; line-height:1; white-space:nowrap}
+
+.list{display:flex; flex-direction:column; gap:1px; background:var(--line); border:1px solid var(--line); border-radius:var(--radius); overflow:hidden}
+.row{display:flex; align-items:center; gap:14px; background:var(--surface); padding:11px 14px; cursor:pointer; text-align:left; border:none; color:inherit; width:100%}
+.row:hover{background:var(--surface-2)}
+.row .rthumb{width:52px; height:64px; flex:none; border-radius:8px; overflow:hidden; background:var(--surface-2); border:1px solid var(--line)}
+.row .rthumb img{width:100%; height:100%; object-fit:cover}
+.row.is-sold .rthumb img{filter:grayscale(.9) opacity(.6)}
+.row .rmain{flex:1; min-width:0}
+.row .rname{font-size:14.5px; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+.row .rsub{font-size:12px; color:var(--muted); margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+.row .rsub .dot{margin:0 6px; opacity:.5}
+.row .rprice{font-size:15px; font-weight:600; font-variant-numeric:tabular-nums; flex:none}
+.row .rprice.sold{color:var(--sold); text-decoration:line-through}
+
+.empty{text-align:center; padding:70px 20px; color:var(--muted)}
+.empty .big{font-family:var(--serif); font-size:24px; color:var(--ink); margin-bottom:8px}
+.empty button{margin-top:18px}
+
+.modal{position:fixed; inset:0; z-index:60; display:none; align-items:flex-end; justify-content:center}
+.modal.open{display:flex}
+@media(min-width:720px){.modal{align-items:center}}
+.backdrop{position:absolute; inset:0; background:rgba(20,20,18,.5); backdrop-filter:blur(3px); animation:fade .2s}
+.sheet{position:relative; background:var(--surface); width:100%; max-width:860px; max-height:94vh; overflow:auto; border-radius:18px 18px 0 0; box-shadow:var(--shadow); animation:rise .28s cubic-bezier(.2,.7,.3,1)}
+@media(min-width:720px){.sheet{border-radius:18px; animation:fade .2s}}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+@keyframes rise{from{transform:translateY(30px); opacity:.4}to{transform:none; opacity:1}}
+.sheet .close{position:absolute; top:12px; right:12px; z-index:3; width:36px; height:36px; border-radius:50%; border:none; background:color-mix(in srgb,var(--surface) 70%,transparent); backdrop-filter:blur(6px); color:var(--ink); display:flex; align-items:center; justify-content:center}
+.sheet-grid{display:grid; grid-template-columns:1fr}
+@media(min-width:720px){.sheet-grid{grid-template-columns:1fr 1fr}}
+.sheet-img{background:var(--surface-2); aspect-ratio:3/4; position:relative}
+@media(min-width:720px){.sheet-img{aspect-ratio:auto; min-height:520px}}
+.sheet-img img{width:100%; height:100%; object-fit:cover}
+.sheet-body{padding:22px 22px 26px}
+@media(min-width:720px){.sheet-body{padding:34px 32px}}
+.sheet-body .m-brand{font-size:12px; text-transform:uppercase; letter-spacing:.1em; color:var(--accent); font-weight:600}
+.sheet-body .m-name{font-family:var(--serif); font-size:27px; font-weight:500; letter-spacing:-.015em; line-height:1.15; margin:8px 0 4px}
+.sheet-body .m-price{font-size:24px; font-weight:600; margin:14px 0 2px; font-variant-numeric:tabular-nums}
+.sheet-body .m-price.sold{color:var(--sold); text-decoration:line-through}
+.statusline{display:inline-flex; align-items:center; gap:7px; font-size:13px; font-weight:500; margin-top:6px}
+.status-dot{width:8px; height:8px; border-radius:50%}
+.dl{display:grid; grid-template-columns:auto 1fr; gap:10px 18px; margin:22px 0 4px; border-top:1px solid var(--line); padding-top:20px}
+.dl dt{color:var(--muted); font-size:13px}
+.dl dd{margin:0; font-size:13.5px; font-weight:500}
+.swatch{display:inline-block; width:12px; height:12px; border-radius:50%; border:1px solid var(--line); vertical-align:-1px; margin-right:6px}
+.m-notes{margin-top:16px; font-size:13.5px; color:var(--muted); line-height:1.55; background:var(--surface-2); border-radius:10px; padding:13px 15px}
+.m-actions{display:flex; flex-wrap:wrap; gap:10px; margin-top:24px}
+.btn{display:inline-flex; align-items:center; justify-content:center; gap:8px; height:46px; padding:0 20px; border-radius:99px; font-size:14.5px; font-weight:600; border:1px solid var(--line); background:var(--surface); color:var(--ink); text-decoration:none; flex:1 1 auto}
+.btn svg{width:18px; height:18px}
+.btn.primary{background:var(--accent); color:var(--on-accent); border-color:var(--accent)}
+.btn.primary:hover{filter:brightness(1.06)}
+.btn:hover{border-color:var(--ink)}
+
+.toast{position:fixed; bottom:24px; left:50%; transform:translate(-50%,20px); z-index:80; background:var(--ink); color:var(--bg); padding:12px 20px; border-radius:99px; font-size:14px; font-weight:500; box-shadow:var(--shadow); opacity:0; pointer-events:none; transition:.25s; display:flex; align-items:center; gap:9px}
+.toast.show{opacity:1; transform:translate(-50%,0)}
+.toast svg{width:17px; height:17px}
+footer{margin:60px 0 40px; text-align:center; color:var(--muted); font-size:12.5px}
+@media(prefers-reduced-motion:reduce){*{animation:none!important; transition:none!important}}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="?" id="brand">BPM <em>closet</em><span class="brand-dot">Vinted</span></a>
+    <div class="spacer"></div>
+    <button class="icon-btn" id="btnShare" title="Copy a link to this filtered view">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/></svg>
+      <span class="lbl">Share</span>
+    </button>
+    <button class="icon-btn" id="btnTheme" title="Toggle light / dark mode" aria-label="Toggle theme">
+      <svg id="themeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"></svg>
+    </button>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="controls">
+    <div class="searchrow">
+      <label class="search">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.2-3.2" stroke-linecap="round"/></svg>
+        <input id="q" type="search" placeholder="Search by name, brand or notes…" autocomplete="off" />
+      </label>
+      <select class="field" id="orden" title="Sort results">
+        <option value="recientes">Most recent</option>
+        <option value="precio-asc">Price: low to high</option>
+        <option value="precio-desc">Price: high to low</option>
+        <option value="nombre">Name A–Z</option>
+      </select>
+      <button class="icon-btn btn-filters" id="btnFilters">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 5h18M6 12h12M10 19h4" stroke-linecap="round"/></svg>
+        <span class="lbl">Filters</span>
+      </button>
+    </div>
+    <div class="filterbar" id="filterbar">
+      <select class="field" id="f-marca"><option value="">All brands</option></select>
+      <select class="field" id="f-categoria"><option value="">All categories</option></select>
+      <select class="field" id="f-talla"><option value="">All sizes</option></select>
+      <select class="field" id="f-color"><option value="">All colours</option></select>
+      <select class="field" id="f-venta">
+        <option value="">Any status</option>
+        <option value="available">Available</option>
+        <option value="reserved">Reserved</option>
+        <option value="sold">Sold</option>
+      </select>
+      <div class="pricebox">
+        <span>€</span>
+        <input id="f-pmin" type="number" min="0" placeholder="Min" inputmode="numeric" />
+        <span>–</span>
+        <input id="f-pmax" type="number" min="0" placeholder="Max" inputmode="numeric" />
+      </div>
+      <label class="toggle"><input type="checkbox" id="f-solo" /><span class="switch"></span>Available only</label>
+      <button class="btn-clear" id="btnClear">Clear filters</button>
+    </div>
+    <div class="chips" id="chips"></div>
+  </section>
+
+  <div class="resultline">
+    <div class="count" id="count"></div>
+    <div class="viewtoggle" role="group" aria-label="View type">
+      <button id="viewGrid" class="active" title="Grid view" aria-label="Grid"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></button>
+      <button id="viewList" title="List view" aria-label="List"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M8 6h13M8 12h13M8 18h13M3.5 6h.01M3.5 12h.01M3.5 18h.01"/></svg></button>
+    </div>
+  </div>
+
+  <div id="results"></div>
+  <footer>BPM closet · Catalogue kept up to date by hand</footer>
+</main>
+
+<div class="modal" id="modal" role="dialog" aria-modal="true" aria-label="Item detail">
+  <div class="backdrop" data-close></div>
+  <div class="sheet" id="sheet"></div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ╔═══════════════════════════════════════════════════════════════════════╗
+   ║   CONFIGURATION — edit this to personalise the public catalogue       ║
+   ╚═══════════════════════════════════════════════════════════════════════╝ */
+const CONFIG = {
+  title: "BPM closet",
+  accent: "Vinted",
+  currency: "€",
+  // Your WhatsApp number (country code, no symbols). "" hides the button.
+  whatsapp: "34600000000",
+  // Your Vinted profile. "" hides the button.
+  vintedProfile: "https://www.vinted.es/member/88913650",
+  message: "Hi! I'm interested in this item: {name}. Is it still available?"
+};
+
+/* The products live in items.json (managed from admin.html).
+   This embedded copy is only a fallback so the page still shows something
+   if items.json can't be loaded (e.g. opened locally by double-click). */
+const SEED_DATA = [
+  {photo:"https://images.unsplash.com/photo-1576995853123-5a10305d93c0?auto=format&fit=crop&w=600&q=70",name:"Oversized denim shirt",brand:"Zara",size:"M",category:"Shirts",color:"Denim blue",condition:"Like new",price:18.99,status:"available",vintedLink:"",notes:"Roomy cut, dropped shoulders.",date:"2025-06-02",isNew:true},
+  {photo:"https://images.unsplash.com/photo-1542272604-787c3835535d?auto=format&fit=crop&w=600&q=70",name:"Straight high-waist jeans",brand:"Levi's",size:"40",category:"Jeans",color:"Mid blue",condition:"Good condition",price:24.00,status:"available",vintedLink:"",notes:"Model 501.",date:"2025-05-28"},
+  {photo:"https://images.unsplash.com/photo-1595777457583-95e059d581b8?auto=format&fit=crop&w=600&q=70",name:"Linen midi dress",brand:"Mango",size:"S",category:"Dresses",color:"Beige",condition:"New with tags",price:29.90,status:"available",vintedLink:"",notes:"Unworn, tags attached.",date:"2025-06-10",isNew:true},
+  {photo:"https://images.unsplash.com/photo-1591047139829-d91aecb6caea?auto=format&fit=crop&w=600&q=70",name:"Long wool overcoat",brand:"COS",size:"M",category:"Coats",color:"Camel",condition:"Like new",price:55.00,status:"reserved",vintedLink:"",notes:"Wool blend.",date:"2025-04-15"},
+  {photo:"https://images.unsplash.com/photo-1556906781-9a412961c28c?auto=format&fit=crop&w=600&q=70",name:"Retro leather trainers",brand:"Adidas",size:"39",category:"Trainers",color:"White",condition:"Good condition",price:32.00,status:"available",vintedLink:"",notes:"Original box included.",date:"2025-05-12"},
+  {photo:"https://images.unsplash.com/photo-1620799140408-edc6dcb6d633?auto=format&fit=crop&w=600&q=70",name:"Chunky knit jumper",brand:"H&M",size:"L",category:"Knitwear",color:"Green",condition:"Good condition",price:14.50,status:"sold",vintedLink:"",notes:"Sold!",date:"2025-03-30"},
+  {photo:"https://images.unsplash.com/photo-1434389677669-e08b4cac3105?auto=format&fit=crop&w=600&q=70",name:"Bomber jacket",brand:"Bershka",size:"S",category:"Jackets",color:"Black",condition:"Like new",price:21.00,status:"available",vintedLink:"",notes:"Gold zip.",date:"2025-06-18"},
+  {photo:"https://images.unsplash.com/photo-1551488831-00ddcb6c6bd3?auto=format&fit=crop&w=600&q=70",name:"Basic cotton tee",brand:"Uniqlo",size:"M",category:"T-shirts",color:"White",condition:"New with tags",price:8.00,status:"available",vintedLink:"",notes:"Supima cotton.",date:"2025-06-20"},
+  {photo:"https://images.unsplash.com/photo-1591561954557-26941169b49e?auto=format&fit=crop&w=600&q=70",name:"Small crossbody bag",brand:"Parfois",size:"One size",category:"Accessories",color:"Brown",condition:"Good condition",price:16.00,status:"available",vintedLink:"",notes:"Adjustable strap.",date:"2025-05-05"},
+  {photo:"https://images.unsplash.com/photo-1583744946564-b52ac1c389c8?auto=format&fit=crop&w=600&q=70",name:"Pleated midi skirt",brand:"Stradivarius",size:"S",category:"Skirts",color:"Black",condition:"Like new",price:13.99,status:"available",vintedLink:"",notes:"Falls below the knee.",date:"2025-06-08"}
+];
+
+/* ── Logic (no need to edit below) ────────────────────────────────────── */
+const COLORS={"black":"#1b1b1b","white":"#f7f7f5","grey":"#9ca3af","gray":"#9ca3af","light grey":"#cdcdc8","charcoal":"#4b4d52","blue":"#3257a8","navy":"#1f2a44","mid blue":"#3f6fb0","denim blue":"#4a6079","sky blue":"#7fb0d8","red":"#b3261e","maroon":"#6e2436","burgundy":"#6e2436","pink":"#e6a4b4","fuchsia":"#c6357f","green":"#3f6b4a","olive":"#6b6b3a","khaki":"#7c7b52","yellow":"#e3c04b","mustard":"#caa53a","orange":"#cc6b3f","brown":"#6b4f3a","camel":"#c19a6b","beige":"#d8cbb6","cream":"#efe7d6","sand":"#cdb89a","purple":"#6b4e71","violet":"#6b4e71","lilac":"#b3a0cf","gold":"#c4a35a","silver":"#c9c9cf","multicolour":"linear-gradient(135deg,#e0607e,#e3b84b,#5aa6c4)","multicolor":"linear-gradient(135deg,#e0607e,#e3b84b,#5aa6c4)"};
+const STATUS={available:["Available","var(--accent)"],reserved:["Reserved","var(--amber)"],sold:["Sold","var(--sold)"]};
+const $=s=>document.querySelector(s), $$=s=>Array.from(document.querySelectorAll(s));
+const norm=s=>(s||"").toString().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim();
+const money=n=>CONFIG.currency+Number(n||0).toLocaleString("en-GB",{minimumFractionDigits:2,maximumFractionDigits:2});
+const colorHex=c=>COLORS[norm(c)]||null;
+function safeURL(qs){ try{ history.replaceState(null,"",qs); }catch(e){} }
+function normalizePhoto(url){ if(!url) return ""; const m=url.match(/\/file\/d\/([^/]+)/)||url.match(/[?&]id=([^&]+)/); if(url.includes("drive.google.com")&&m) return "https://drive.google.com/thumbnail?id="+m[1]+"&sz=w800"; return url; }
+function placeholder(p){ let base=colorHex(p.color); if(!base||base.startsWith("linear")) base="#cfccc4"; const txt=(p.category||"Item").toUpperCase(); const svg=`<svg xmlns='http://www.w3.org/2000/svg' width='600' height='800' viewBox='0 0 600 800'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='${base}' stop-opacity='.32'/><stop offset='1' stop-color='#f4f3ef'/></linearGradient></defs><rect width='600' height='800' fill='url(#g)'/><path d='M300 300a30 30 0 0 0-12 57l.3 16-118 70a26 26 0 0 0-13 22v18a18 18 0 0 0 18 18h249a18 18 0 0 0 18-18v-18a26 26 0 0 0-13-22l-118-70 .3-16A30 30 0 0 0 300 300Z' fill='none' stroke='${base}' stroke-opacity='.5' stroke-width='6' stroke-linejoin='round'/><text x='300' y='560' font-family='Inter,sans-serif' font-size='22' letter-spacing='3' fill='${base}' fill-opacity='.7' text-anchor='middle'>${txt}</text></svg>`; return "data:image/svg+xml;charset=utf-8,"+encodeURIComponent(svg); }
+
+let ITEMS=[];
+function buildItems(raw){ ITEMS = raw.map((p,i)=>({ ...p, id:"p"+i, _idx:i, photo:normalizePhoto(p.photo) })); }
+
+let state={ q:"",brand:"",category:"",size:"",color:"",status:"",pmin:"",pmax:"",soloAvail:false,sort:"recientes",view:"grid" };
+
+function unique(field){ return [...new Set(ITEMS.map(p=>p[field]).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"en",{numeric:true})); }
+function fillSelect(id,field){ const sel=$(id); unique(field).forEach(v=>{ const o=document.createElement("option"); o.value=v; o.textContent=v; sel.appendChild(o); }); }
+
+function paintChips(){
+  const tally={}; ITEMS.forEach(p=>{ if(p.brand) tally[p.brand]=(tally[p.brand]||0)+1; });
+  const top=Object.entries(tally).sort((a,b)=>b[1]-a[1]).slice(0,7); const cont=$("#chips"); cont.innerHTML="";
+  top.forEach(([brand,n])=>{ const b=document.createElement("button"); b.className="chip"+(state.brand===brand?" active":""); b.innerHTML=brand+`<span class="n">${n}</span>`; b.onclick=()=>{ state.brand=(state.brand===brand?"":brand); $("#f-marca").value=state.brand; apply(); }; cont.appendChild(b); });
+}
+function filterItems(){
+  const q=norm(state.q);
+  let out=ITEMS.filter(p=>{
+    if(state.soloAvail&&p.status!=="available") return false;
+    if(state.status&&p.status!==state.status) return false;
+    if(state.brand&&p.brand!==state.brand) return false;
+    if(state.category&&p.category!==state.category) return false;
+    if(state.size&&p.size!==state.size) return false;
+    if(state.color&&p.color!==state.color) return false;
+    if(state.pmin!==""&&Number(p.price)<Number(state.pmin)) return false;
+    if(state.pmax!==""&&Number(p.price)>Number(state.pmax)) return false;
+    if(q){ const blob=norm(p.name+" "+p.brand+" "+p.notes+" "+p.category+" "+p.color); if(!blob.includes(q)) return false; }
+    return true;
+  });
+  const o=state.sort;
+  out.sort((a,b)=>{ if(o==="precio-asc") return a.price-b.price; if(o==="precio-desc") return b.price-a.price; if(o==="nombre") return a.name.localeCompare(b.name,"en"); const fa=a.date||"",fb=b.date||""; if(fa&&fb) return fb.localeCompare(fa); return b._idx-a._idx; });
+  return out;
+}
+function badge(p){ if(p.status==="sold") return `<span class="badge sold">Sold</span>`; if(p.status==="reserved") return `<span class="badge reserved">Reserved</span>`; if(p.isNew) return `<span class="badge new">New</span>`; return ""; }
+
+function paint(items){
+  const cont=$("#results");
+  if(items.length===0){ cont.innerHTML=`<div class="empty"><div class="big">Nothing here</div>No items match these filters.<div><button class="icon-btn" onclick="clearFilters()">Clear filters</button></div></div>`; return; }
+  if(state.view==="list"){
+    cont.innerHTML=`<div class="list">`+items.map(p=>{ const sold=p.status==="sold"; return `<button class="row ${sold?'is-sold':''}" data-id="${p.id}"><div class="rthumb"><img alt="" referrerpolicy="no-referrer" data-src="${p.photo}" data-id="${p.id}"></div><div class="rmain"><div class="rname">${p.name}</div><div class="rsub">${p.brand||"—"}<span class="dot">·</span>Size ${p.size||"—"}<span class="dot">·</span>${p.category||""}</div></div><div class="rprice ${sold?'sold':''}">${money(p.price)}</div></button>`; }).join("")+`</div>`;
+  } else {
+    cont.innerHTML=`<div class="grid">`+items.map(p=>{ const sold=p.status==="sold"; return `<button class="card ${sold?'is-sold':''}" data-id="${p.id}"><div class="thumb">${badge(p)}<img alt="${p.name}" referrerpolicy="no-referrer" data-src="${p.photo}" data-id="${p.id}"></div><div class="meta"><div class="name">${p.name}</div><div class="brand">${p.brand||"No brand"}</div><div class="foot"><span class="price ${sold?'sold':''}">${money(p.price)}</span><span class="size-pill">${p.size||"–"}</span></div></div></button>`; }).join("")+`</div>`;
+  }
+  loadImages();
+  $$("[data-id]").forEach(el=>{ if(el.tagName!=="IMG") el.addEventListener("click",()=>openModal(el.dataset.id)); });
+}
+let io;
+function loadImages(){
+  if(io) io.disconnect();
+  io=new IntersectionObserver(es=>{ es.forEach(e=>{ if(!e.isIntersecting) return; const img=e.target,p=ITEMS.find(x=>x.id===img.dataset.id); img.onerror=()=>{ img.onerror=null; img.src=placeholder(p); img.classList.add("loaded"); }; img.onload=()=>img.classList.add("loaded"); img.src=img.dataset.src||placeholder(p); if(!img.dataset.src) img.classList.add("loaded"); io.unobserve(img); }); },{rootMargin:"300px"});
+  $$("#results img").forEach(img=>io.observe(img));
+}
+function paintCount(n){ $("#count").innerHTML=`<b>${n}</b> ${n===1?"item found":"items found"}`; }
+
+function readURL(){
+  const u=new URLSearchParams(location.search);
+  state.q=u.get("q")||""; state.brand=u.get("brand")||""; state.category=u.get("category")||""; state.size=u.get("size")||""; state.color=u.get("color")||""; state.status=u.get("status")||""; state.pmin=u.get("pmin")||""; state.pmax=u.get("pmax")||""; state.soloAvail=u.get("avail")==="1"; state.sort=u.get("sort")||"recientes"; state.view=u.get("view")==="list"?"list":"grid";
+  $("#q").value=state.q; $("#orden").value=state.sort; $("#f-marca").value=state.brand; $("#f-categoria").value=state.category; $("#f-talla").value=state.size; $("#f-color").value=state.color; $("#f-venta").value=state.status; $("#f-pmin").value=state.pmin; $("#f-pmax").value=state.pmax; $("#f-solo").checked=state.soloAvail; setView(state.view,false);
+}
+function writeURL(){
+  const u=new URLSearchParams();
+  if(state.q) u.set("q",state.q); if(state.brand) u.set("brand",state.brand); if(state.category) u.set("category",state.category); if(state.size) u.set("size",state.size); if(state.color) u.set("color",state.color); if(state.status) u.set("status",state.status); if(state.pmin!=="") u.set("pmin",state.pmin); if(state.pmax!=="") u.set("pmax",state.pmax); if(state.soloAvail) u.set("avail","1"); if(state.sort!=="recientes") u.set("sort",state.sort); if(state.view==="list") u.set("view","list");
+  const qs=u.toString(); safeURL(qs?"?"+qs:location.pathname);
+}
+function apply(){ const items=filterItems(); paint(items); paintCount(items.length); paintChips(); writeURL(); }
+function setView(v,refresh=true){ state.view=v; $("#viewGrid").classList.toggle("active",v==="grid"); $("#viewList").classList.toggle("active",v==="list"); if(refresh) apply(); }
+function clearFilters(){ state={...state,q:"",brand:"",category:"",size:"",color:"",status:"",pmin:"",pmax:"",soloAvail:false}; $("#q").value=""; ["#f-marca","#f-categoria","#f-talla","#f-color","#f-venta","#f-pmin","#f-pmax"].forEach(s=>$(s).value=""); $("#f-solo").checked=false; apply(); }
+window.clearFilters=clearFilters;
+
+function openModal(id){
+  const p=ITEMS.find(x=>x.id===id); if(!p) return;
+  const sold=p.status==="sold"; const st=STATUS[p.status]||["—","var(--muted)"]; const hex=colorHex(p.color); const sw=hex?`<span class="swatch" style="background:${hex}"></span>`:"";
+  let actions="";
+  if(p.status!=="sold"){
+    if(CONFIG.whatsapp){ const msg=encodeURIComponent(CONFIG.message.replace("{name}",p.name)); actions+=`<a class="btn primary" href="https://wa.me/${CONFIG.whatsapp}?text=${msg}" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 0 0-8.6 15l-1.3 4.7 4.8-1.3A10 10 0 1 0 12 2Zm5.3 14.1c-.2.6-1.3 1.2-1.8 1.2-.5.1-1 .3-3.4-.7s-3.9-3.5-4-3.7-1-1.3-1-2.5.6-1.8.9-2c.2-.3.5-.3.6-.3h.5c.2 0 .4 0 .6.5l.8 2c.1.2.1.4 0 .5l-.4.5c-.2.2-.3.3-.1.6s.7 1.2 1.5 1.9c1 .9 1.8 1.2 2.1 1.3s.4.1.6-.1l.7-.8c.2-.3.4-.2.6-.1l1.9.9c.2.1.4.2.4.3.1.1.1.5-.1 1Z"/></svg>WhatsApp</a>`; }
+    if(p.vintedLink) actions+=`<a class="btn" href="${p.vintedLink}" target="_blank" rel="noopener">View on Vinted ↗</a>`;
+    else if(CONFIG.vintedProfile) actions+=`<a class="btn" href="${CONFIG.vintedProfile}" target="_blank" rel="noopener">My Vinted profile ↗</a>`;
+  }
+  actions+=`<button class="btn" onclick="copyItem('${p.id}')">Copy link</button>`;
+  const rows=[["Condition",p.condition||"—"],["Colour",sw+(p.color||"—")],["Category",p.category||"—"],["Size",p.size||"—"]].map(([k,v])=>`<dt>${k}</dt><dd>${v}</dd>`).join("");
+  $("#sheet").innerHTML=`<button class="close" data-close aria-label="Close"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button><div class="sheet-grid"><div class="sheet-img"><img id="m-img" referrerpolicy="no-referrer" alt="${p.name}"></div><div class="sheet-body"><div class="m-brand">${p.brand||"No brand"}</div><h2 class="m-name">${p.name}</h2><div class="m-price ${sold?'sold':''}">${money(p.price)}</div><div class="statusline"><span class="status-dot" style="background:${st[1]}"></span>${st[0]}</div><dl class="dl">${rows}</dl>${p.notes?`<div class="m-notes">${p.notes}</div>`:""}<div class="m-actions">${actions}</div></div></div>`;
+  const img=$("#m-img"); img.onerror=()=>{ img.onerror=null; img.src=placeholder(p); }; img.src=p.photo||placeholder(p);
+  $("#modal").classList.add("open"); document.body.style.overflow="hidden";
+  const u=new URLSearchParams(location.search); u.set("id",p.id); safeURL("?"+u.toString());
+}
+function closeModal(){ $("#modal").classList.remove("open"); document.body.style.overflow=""; const u=new URLSearchParams(location.search); u.delete("id"); safeURL(u.toString()?"?"+u.toString():location.pathname); }
+window.copyItem=id=>{ const u=new URLSearchParams(location.search); u.set("id",id); copy(location.origin+location.pathname+"?"+u.toString(),"Item link copied"); };
+
+function copy(text,msg){ const done=()=>toast(msg); if(navigator.clipboard){ navigator.clipboard.writeText(text).then(done).catch(()=>fb()); } else fb(); function fb(){ const t=document.createElement("textarea"); t.value=text; document.body.appendChild(t); t.select(); try{document.execCommand("copy");}catch(e){} t.remove(); done(); } }
+function toast(msg){ const el=$("#toast"); el.innerHTML=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l4 4 10-11"/></svg>${msg}`; el.classList.add("show"); clearTimeout(toast._t); toast._t=setTimeout(()=>el.classList.remove("show"),2200); }
+
+const SUN=`<circle cx="12" cy="12" r="4.5"/><path d="M12 2v2M12 20v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M2 12h2M20 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4" stroke-linecap="round"/>`;
+const MOON=`<path d="M20 14.5A8 8 0 1 1 9.5 4 6.5 6.5 0 0 0 20 14.5Z"/>`;
+function setTheme(t){ document.documentElement.setAttribute("data-theme",t); $("#themeIcon").innerHTML=t==="dark"?SUN:MOON; try{ localStorage.setItem("theme",t); }catch(e){} }
+(function(){ let t="light"; try{ t=localStorage.getItem("theme"); }catch(e){} if(!t) t=matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"; setTheme(t); })();
+
+/* Wire up controls */
+$("#brand").innerHTML=CONFIG.title.replace(/(\S+)$/,"<em>$1</em>")+`<span class="brand-dot">${CONFIG.accent}</span>`;
+let tSearch;
+$("#q").addEventListener("input",e=>{ clearTimeout(tSearch); tSearch=setTimeout(()=>{ state.q=e.target.value; apply(); },180); });
+$("#orden").addEventListener("change",e=>{ state.sort=e.target.value; apply(); });
+$("#f-marca").addEventListener("change",e=>{ state.brand=e.target.value; apply(); });
+$("#f-categoria").addEventListener("change",e=>{ state.category=e.target.value; apply(); });
+$("#f-talla").addEventListener("change",e=>{ state.size=e.target.value; apply(); });
+$("#f-color").addEventListener("change",e=>{ state.color=e.target.value; apply(); });
+$("#f-venta").addEventListener("change",e=>{ state.status=e.target.value; apply(); });
+$("#f-pmin").addEventListener("input",e=>{ state.pmin=e.target.value; apply(); });
+$("#f-pmax").addEventListener("input",e=>{ state.pmax=e.target.value; apply(); });
+$("#f-solo").addEventListener("change",e=>{ state.soloAvail=e.target.checked; apply(); });
+$("#btnClear").addEventListener("click",clearFilters);
+$("#viewGrid").addEventListener("click",()=>setView("grid"));
+$("#viewList").addEventListener("click",()=>setView("list"));
+$("#btnTheme").addEventListener("click",()=>setTheme(document.documentElement.getAttribute("data-theme")==="dark"?"light":"dark"));
+$("#btnShare").addEventListener("click",()=>copy(location.href,"Filtered link copied"));
+$("#btnFilters").addEventListener("click",()=>$("#filterbar").classList.toggle("open"));
+$("#modal").addEventListener("click",e=>{ if(e.target.dataset.close!==undefined) closeModal(); });
+document.addEventListener("keydown",e=>{ if(e.key==="Escape"&&$("#modal").classList.contains("open")) closeModal(); });
+
+/* Boot: load items.json, fall back to embedded seed if it can't be fetched */
+async function boot(){
+  let raw=SEED_DATA;
+  try{ const r=await fetch("items.json",{cache:"no-store"}); if(r.ok){ const j=await r.json(); if(Array.isArray(j)&&j.length) raw=j; } }catch(e){ /* local preview → seed */ }
+  buildItems(raw);
+  fillSelect("#f-marca","brand"); fillSelect("#f-categoria","category"); fillSelect("#f-talla","size"); fillSelect("#f-color","color");
+  readURL(); apply();
+  const id=new URLSearchParams(location.search).get("id"); if(id) openModal(id);
+}
+boot();
+</script>
+</body>
+</html>

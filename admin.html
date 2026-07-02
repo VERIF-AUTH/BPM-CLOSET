@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="robots" content="noindex, nofollow" />
+<title>BPM closet · Admin</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M16 6a2.6 2.6 0 0 0-1 5l.02 1.4L5 18.6a2.4 2.4 0 0 0-1 1.9V22a2 2 0 0 0 2 2h20a2 2 0 0 0 2-2v-1.5a2.4 2.4 0 0 0-1-1.9L18 12.4 18 11A2.6 2.6 0 0 0 16 6Z' fill='none' stroke='%231b1b19' stroke-width='1.8' stroke-linejoin='round'/%3E%3C/svg%3E" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;450;500;600&display=swap" rel="stylesheet" />
+<style>
+:root{
+  --bg:#FAFAF7; --surface:#FFFFFF; --surface-2:#F4F3EF;
+  --ink:#1B1B19; --muted:#76746E; --line:#E6E4DD;
+  --accent:#3F5246; --accent-soft:#EAEFE9; --on-accent:#FFFFFF;
+  --sold:#9B9893; --amber:#9A6A20; --amber-soft:#F5EBD8; --danger:#a23b2e;
+  --shadow:0 1px 2px rgba(20,20,18,.04), 0 8px 24px -12px rgba(20,20,18,.18);
+  --radius:12px; --serif:"Fraunces",Georgia,serif; --sans:"Inter",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+}
+[data-theme="dark"]{
+  --bg:#131311; --surface:#1B1B18; --surface-2:#232320;
+  --ink:#F2F1EC; --muted:#A3A199; --line:#2D2D29;
+  --accent:#8FAA8C; --accent-soft:#222a22; --on-accent:#15170F;
+  --sold:#6E6C66; --amber:#D2A35A; --amber-soft:#2c2415; --danger:#d98a7d;
+  --shadow:0 1px 2px rgba(0,0,0,.3), 0 10px 30px -14px rgba(0,0,0,.6);
+}
+*{box-sizing:border-box}
+body{margin:0; background:var(--bg); color:var(--ink); font-family:var(--sans); font-size:15px; line-height:1.5; -webkit-font-smoothing:antialiased}
+*:focus-visible{outline:2px solid var(--accent); outline-offset:2px; border-radius:4px}
+img{display:block; max-width:100%}
+button{font-family:inherit; cursor:pointer}
+a{color:var(--accent)}
+.wrap{max-width:1180px; margin:0 auto; padding:0 18px}
+
+/* Gate */
+.gate{position:fixed; inset:0; z-index:90; display:flex; align-items:center; justify-content:center; background:var(--bg); padding:20px}
+.gate .card{background:var(--surface); border:1px solid var(--line); border-radius:18px; box-shadow:var(--shadow); padding:32px 28px; width:100%; max-width:380px; text-align:center}
+.gate h1{font-family:var(--serif); font-weight:500; font-size:26px; margin:0 0 4px}
+.gate .sub{color:var(--muted); font-size:13.5px; margin-bottom:22px}
+.gate input{width:100%; height:46px; border:1px solid var(--line); background:var(--surface); color:var(--ink); border-radius:10px; padding:0 14px; font-size:15px; text-align:center}
+.gate .err{color:var(--danger); font-size:13px; min-height:18px; margin-top:8px}
+.gate .note{font-size:11.5px; color:var(--muted); margin-top:18px; line-height:1.5}
+
+/* Topbar */
+header.top{position:sticky; top:0; z-index:30; background:color-mix(in srgb,var(--bg) 90%,transparent); backdrop-filter:blur(10px); border-bottom:1px solid var(--line)}
+.top .wrap{display:flex; align-items:center; gap:10px; min-height:62px; flex-wrap:wrap; padding-top:8px; padding-bottom:8px}
+.brand{font-family:var(--serif); font-weight:500; font-size:22px; letter-spacing:-.01em; display:flex; align-items:baseline; gap:.45ch}
+.brand em{font-style:italic; color:var(--accent)}
+.brand-dot{font-size:11px; color:var(--muted); font-family:var(--sans); font-weight:600; letter-spacing:.12em; text-transform:uppercase}
+.top .spacer{flex:1}
+.btn{display:inline-flex; align-items:center; justify-content:center; gap:8px; height:40px; padding:0 16px; border-radius:99px; font-size:14px; font-weight:600; border:1px solid var(--line); background:var(--surface); color:var(--ink); text-decoration:none}
+.btn svg{width:17px; height:17px}
+.btn.primary{background:var(--accent); color:var(--on-accent); border-color:var(--accent)}
+.btn.primary:hover{filter:brightness(1.06)}
+.btn.ghost{background:transparent}
+.btn.small{height:34px; padding:0 12px; font-size:13px; font-weight:500}
+.btn.danger{color:var(--danger); border-color:color-mix(in srgb,var(--danger) 40%,var(--line))}
+.btn:hover{border-color:var(--ink)}
+.iconbtn{width:40px; height:40px; border-radius:99px; border:1px solid var(--line); background:var(--surface); color:var(--ink); display:inline-flex; align-items:center; justify-content:center}
+.iconbtn svg{width:18px;height:18px}
+
+/* Dirty banner */
+.dirty{display:none; background:var(--amber-soft); color:var(--amber); border:1px solid color-mix(in srgb,var(--amber) 30%,var(--line)); border-radius:12px; padding:12px 16px; margin:18px 0 0; font-size:13.5px; font-weight:500; align-items:center; gap:10px}
+.dirty.show{display:flex}
+
+section.block{margin-top:26px}
+.h{font-family:var(--serif); font-size:19px; font-weight:500; margin:0 0 14px; display:flex; align-items:center; gap:10px}
+.h .pill{font-family:var(--sans); font-size:11px; font-weight:600; color:var(--muted); background:var(--surface-2); border:1px solid var(--line); padding:3px 9px; border-radius:99px}
+
+/* Metrics */
+.metrics{display:grid; grid-template-columns:repeat(2,1fr); gap:12px}
+@media(min-width:640px){.metrics{grid-template-columns:repeat(3,1fr)}}
+@media(min-width:960px){.metrics{grid-template-columns:repeat(6,1fr)}}
+.metric{background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:15px 16px}
+.metric .v{font-family:var(--serif); font-size:25px; font-weight:500; letter-spacing:-.02em; line-height:1.05}
+.metric .k{font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.07em; margin-top:6px; font-weight:600}
+.metric.accent .v{color:var(--accent)}
+
+/* Form */
+.panel{background:var(--surface); border:1px solid var(--line); border-radius:16px; padding:20px; display:grid; grid-template-columns:1fr; gap:22px}
+@media(min-width:820px){.panel{grid-template-columns:1.4fr .9fr}}
+.formgrid{display:grid; grid-template-columns:1fr 1fr; gap:13px 14px}
+.field-wrap{display:flex; flex-direction:column; gap:6px}
+.field-wrap.full{grid-column:1 / -1}
+label.lab{font-size:12px; font-weight:600; color:var(--muted)}
+input.in, select.in, textarea.in{width:100%; height:42px; border:1px solid var(--line); background:var(--bg); color:var(--ink); border-radius:9px; padding:0 12px; font-size:14px; font-family:inherit}
+textarea.in{height:auto; min-height:64px; padding:9px 12px; resize:vertical; line-height:1.45}
+select.in{appearance:none; -webkit-appearance:none; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M2 4l4 4 4-4' stroke='%2376746E' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 12px center; padding-right:30px}
+.checkrow{display:flex; align-items:center; gap:9px; height:42px}
+.checkrow input{width:18px; height:18px; accent-color:var(--accent)}
+.formactions{grid-column:1 / -1; display:flex; gap:10px; flex-wrap:wrap; margin-top:4px}
+.hint{font-size:11.5px; color:var(--muted); line-height:1.45}
+
+/* Live preview */
+.preview-wrap{display:flex; flex-direction:column; gap:10px}
+.preview-wrap .ptitle{font-size:12px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:.06em}
+.pcard{border:1px solid var(--line); border-radius:14px; overflow:hidden; background:var(--surface)}
+.pthumb{position:relative; aspect-ratio:3/4; background:var(--surface-2)}
+.pthumb img{width:100%; height:100%; object-fit:cover}
+.pbadge{position:absolute; top:9px; left:9px; font-size:10px; font-weight:600; letter-spacing:.05em; text-transform:uppercase; padding:4px 8px; border-radius:99px; background:rgba(20,20,18,.78); color:#fff}
+.pmeta{padding:12px 13px}
+.pmeta .pn{font-size:14px; font-weight:500}
+.pmeta .pb{font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.06em; margin-top:3px; font-weight:500}
+.pmeta .pf{display:flex; justify-content:space-between; align-items:center; margin-top:9px}
+.pmeta .pp{font-weight:600}
+.pmeta .ps{font-size:11px; font-weight:600; background:var(--surface-2); border:1px solid var(--line); padding:3px 8px; border-radius:6px}
+
+/* Table */
+.tools{display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:12px}
+.tools .search{position:relative; flex:1; min-width:180px}
+.tools .search input{width:100%; height:40px; border:1px solid var(--line); background:var(--surface); color:var(--ink); border-radius:99px; padding:0 14px}
+.tablecard{border:1px solid var(--line); border-radius:14px; overflow:hidden; background:var(--surface)}
+table{width:100%; border-collapse:collapse; font-size:13.5px}
+th{text-align:left; font-size:11px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); font-weight:600; padding:11px 12px; border-bottom:1px solid var(--line); background:var(--surface-2)}
+td{padding:9px 12px; border-bottom:1px solid var(--line); vertical-align:middle}
+tr:last-child td{border-bottom:none}
+.tthumb{width:40px; height:50px; border-radius:7px; object-fit:cover; background:var(--surface-2); border:1px solid var(--line)}
+.tname{font-weight:500}
+.tbrand{color:var(--muted); font-size:12px}
+.statussel{height:32px; border:1px solid var(--line); background:var(--bg); color:var(--ink); border-radius:7px; padding:0 8px; font-size:12.5px; font-weight:500; appearance:none; -webkit-appearance:none}
+.dot{display:inline-block; width:7px; height:7px; border-radius:50%; margin-right:6px; vertical-align:1px}
+.tactions{display:flex; gap:6px; justify-content:flex-end}
+.colhide{display:none}
+@media(min-width:760px){.colhide{display:table-cell}}
+.tempty{padding:40px 16px; text-align:center; color:var(--muted)}
+.seg{display:inline-flex; border:1px solid var(--line); border-radius:99px; background:var(--surface); padding:3px; gap:2px}
+.seg button{border:none; background:transparent; color:var(--muted); height:32px; padding:0 12px; border-radius:99px; font-size:12.5px; font-weight:500}
+.seg button.active{background:var(--accent-soft); color:var(--accent)}
+.tools .grow{flex:1; min-width:160px}
+
+.toast{position:fixed; bottom:24px; left:50%; transform:translate(-50%,20px); z-index:80; background:var(--ink); color:var(--bg); padding:12px 20px; border-radius:99px; font-size:14px; font-weight:500; box-shadow:var(--shadow); opacity:0; pointer-events:none; transition:.25s; display:flex; align-items:center; gap:9px}
+.toast.show{opacity:1; transform:translate(-50%,0); pointer-events:auto}
+.toast svg{width:17px; height:17px}
+.toast .undo{color:var(--bg); font-weight:700; text-decoration:underline; text-underline-offset:3px; cursor:pointer; background:none; border:none; font-size:14px; padding:0}
+
+/* quick chips under form fields */
+.qchips{display:flex; flex-wrap:wrap; gap:6px; margin-top:2px}
+.qchip{border:1px solid var(--line); background:var(--bg); color:var(--muted); border-radius:99px; padding:4px 11px; font-size:12px; font-weight:500}
+.qchip:hover{border-color:var(--ink); color:var(--ink)}
+.qchip.on{background:var(--accent-soft); border-color:var(--accent); color:var(--accent)}
+
+/* photo row with paste button */
+.photorow{display:flex; gap:8px}
+.photorow input{flex:1}
+.photorow .btn{flex:none}
+
+/* publish state pill */
+.pub{display:inline-flex; align-items:center; gap:7px; font-size:12px; font-weight:600; color:var(--muted); padding:0 4px}
+.pub .pd{width:8px; height:8px; border-radius:50%; background:var(--sold)}
+.pub.ok .pd{background:var(--accent)}
+.pub.pending .pd{background:var(--amber)}
+.pub.ok{color:var(--accent)}
+.pub.pending{color:var(--amber)}
+
+/* settings modal */
+.smodal{position:fixed; inset:0; z-index:70; display:none; align-items:center; justify-content:center; padding:18px}
+.smodal.open{display:flex}
+.smodal .back{position:absolute; inset:0; background:rgba(20,20,18,.5); backdrop-filter:blur(3px)}
+.smodal .card{position:relative; background:var(--surface); border:1px solid var(--line); border-radius:16px; box-shadow:var(--shadow); width:100%; max-width:460px; padding:24px 22px; max-height:92vh; overflow:auto}
+.smodal h2{font-family:var(--serif); font-weight:500; font-size:20px; margin:0 0 4px}
+.smodal .sd{color:var(--muted); font-size:13px; margin-bottom:16px; line-height:1.5}
+.smodal .fw{display:flex; flex-direction:column; gap:6px; margin-bottom:12px}
+.smodal .ok{color:var(--accent); font-size:12.5px; font-weight:600; min-height:16px}
+.smodal .steps{font-size:12px; color:var(--muted); line-height:1.6; background:var(--surface-2); border-radius:10px; padding:12px 14px; margin-top:14px}
+.smodal .steps b{color:var(--ink)}
+footer{margin:48px 0 36px; text-align:center; color:var(--muted); font-size:12px}
+</style>
+</head>
+<body>
+
+<!-- ░░ ACCESS GATE ░░ -->
+<div class="gate" id="gate">
+  <div class="card">
+    <h1>BPM <em style="font-style:italic;color:var(--accent)">admin</em></h1>
+    <div class="sub">Private area · enter your passphrase</div>
+    <input id="pass" type="password" placeholder="Passphrase" autocomplete="current-password" />
+    <div class="err" id="passErr"></div>
+    <button class="btn primary" id="enter" style="width:100%;margin-top:6px">Enter</button>
+    <div class="note">This passphrase only hides the panel from casual eyes. Your real protection is that nobody but you can publish to your GitHub repository.</div>
+  </div>
+</div>
+
+<!-- ░░ APP ░░ -->
+<div id="app" style="display:none">
+  <header class="top">
+    <div class="wrap">
+      <div class="brand">BPM <em>closet</em><span class="brand-dot">Admin</span></div>
+      <div class="spacer"></div>
+      <button class="iconbtn" id="btnTheme" title="Light / dark" aria-label="Toggle theme"><svg id="themeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"></svg></button>
+      <a class="btn ghost small" href="index.html" target="_blank" rel="noopener">View shop ↗</a>
+      <span class="pub" id="pubState"><span class="pd"></span><span id="pubTxt">—</span></span>
+      <button class="btn ghost small" id="btnReload" title="Discard local changes and reload the published file">Reload published</button>
+      <button class="btn ghost small" id="btnDownload" title="Manual backup / manual publish">Download JSON</button>
+      <button class="btn primary" id="btnPublish" title="Publish your changes to the live shop">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5m0 0-5 5m5-5 5 5"/><path d="M5 21h14"/></svg>
+        Publish
+      </button>
+      <button class="iconbtn" id="btnSettings" title="Publishing settings" aria-label="Settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1 1.55V21a2 2 0 1 1-4 0v-.09a1.7 1.7 0 0 0-1-1.55 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.55-1H3a2 2 0 1 1 0-4h.09a1.7 1.7 0 0 0 1.55-1 1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.7 1.7 0 0 0 1.87.34h.09a1.7 1.7 0 0 0 1-1.55V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1 1.55 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.87v.09a1.7 1.7 0 0 0 1.55 1H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.55 1Z"/></svg></button>
+      <button class="iconbtn" id="btnLock" title="Lock" aria-label="Lock"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4.5" y="10.5" width="15" height="10" rx="2"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"/></svg></button>
+    </div>
+  </header>
+
+  <main class="wrap">
+
+    <div class="dirty" id="dirty">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 8v5M12 16.5h.01M10.3 3.9 2.4 18a2 2 0 0 0 1.7 3h15.8a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg>
+      <span>You have unsaved changes. Press <b>Publish</b> to make them live (or Download JSON to do it manually).</span>
+    </div>
+
+    <!-- Metrics -->
+    <section class="block">
+      <div class="h">Overview <span class="pill" id="updated"></span></div>
+      <div class="metrics" id="metrics"></div>
+    </section>
+
+    <!-- Add / edit -->
+    <section class="block">
+      <div class="h" id="formTitle">Add item</div>
+      <div class="panel">
+        <div class="formcol">
+          <div class="formgrid">
+            <div class="field-wrap full">
+              <label class="lab" for="i-photo">Photo URL</label>
+              <div class="photorow">
+                <input class="in" id="i-photo" placeholder="Paste an image link here…" />
+                <button class="btn small" id="btnPaste" type="button" title="Paste from clipboard">Paste</button>
+              </div>
+              <div class="hint">In any browser: right-click the photo → <b>“Copy image address”</b> → paste it here (works with Vinted listing photos). Google Drive share links also work. Check the preview →</div>
+            </div>
+            <div class="field-wrap full">
+              <label class="lab" for="i-name">Name *</label>
+              <input class="in" id="i-name" placeholder="e.g. Oversized denim shirt" />
+            </div>
+            <div class="field-wrap">
+              <label class="lab" for="i-brand">Brand</label>
+              <input class="in" id="i-brand" list="dl-brand" placeholder="e.g. Zara" />
+            </div>
+            <div class="field-wrap">
+              <label class="lab" for="i-size">Size</label>
+              <input class="in" id="i-size" list="dl-size" placeholder="e.g. M / 40 / One size" />
+              <div class="qchips" data-for="i-size">
+                <button type="button" class="qchip">XS</button><button type="button" class="qchip">S</button><button type="button" class="qchip">M</button><button type="button" class="qchip">L</button><button type="button" class="qchip">XL</button><button type="button" class="qchip">One size</button>
+              </div>
+            </div>
+            <div class="field-wrap">
+              <label class="lab" for="i-category">Category</label>
+              <input class="in" id="i-category" list="dl-category" placeholder="e.g. Shirts" />
+            </div>
+            <div class="field-wrap">
+              <label class="lab" for="i-color">Colour</label>
+              <input class="in" id="i-color" list="dl-color" placeholder="e.g. Navy" />
+            </div>
+            <div class="field-wrap">
+              <label class="lab" for="i-condition">Condition</label>
+              <input class="in" id="i-condition" list="dl-condition" placeholder="e.g. Like new" />
+              <div class="qchips" data-for="i-condition">
+                <button type="button" class="qchip">New with tags</button><button type="button" class="qchip">Like new</button><button type="button" class="qchip">Good condition</button>
+              </div>
+            </div>
+            <div class="field-wrap">
+              <label class="lab" for="i-price">Price (€) *</label>
+              <input class="in" id="i-price" type="number" min="0" step="0.01" placeholder="e.g. 18.99" />
+            </div>
+            <div class="field-wrap">
+              <label class="lab" for="i-status">Status</label>
+              <select class="in" id="i-status">
+                <option value="available">Available</option>
+                <option value="reserved">Reserved</option>
+                <option value="sold">Sold</option>
+              </select>
+            </div>
+            <div class="field-wrap">
+              <label class="lab" for="i-date">Date listed</label>
+              <input class="in" id="i-date" type="date" />
+            </div>
+            <div class="field-wrap full">
+              <label class="lab" for="i-vinted">Vinted link</label>
+              <input class="in" id="i-vinted" placeholder="https://www.vinted.com/items/…  (optional)" />
+            </div>
+            <div class="field-wrap full">
+              <label class="lab" for="i-notes">Notes</label>
+              <textarea class="in" id="i-notes" placeholder="Measurements, flaws, details… (optional)"></textarea>
+            </div>
+            <div class="field-wrap">
+              <label class="checkrow"><input type="checkbox" id="i-new" /> Show “New” badge</label>
+            </div>
+            <div class="formactions">
+              <button class="btn primary" id="btnSave">Add item</button>
+              <button class="btn ghost" id="btnCancel" style="display:none">Cancel edit</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="preview-wrap">
+          <div class="ptitle">Live preview</div>
+          <div class="pcard">
+            <div class="pthumb"><span class="pbadge" id="pv-badge" style="display:none"></span><img id="pv-img" referrerpolicy="no-referrer" alt=""></div>
+            <div class="pmeta">
+              <div class="pn" id="pv-name">Item name</div>
+              <div class="pb" id="pv-brand">Brand</div>
+              <div class="pf"><span class="pp" id="pv-price">€0.00</span><span class="ps" id="pv-size">–</span></div>
+            </div>
+          </div>
+          <div class="hint">This is exactly how the card will look in your shop.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Inventory table -->
+    <section class="block">
+      <div class="h">Inventory <span class="pill" id="invCount"></span></div>
+      <div class="tools">
+        <div class="search grow"><input id="tsearch" type="search" placeholder="Search by name or brand…" autocomplete="off" /></div>
+        <div class="seg" id="statusTabs">
+          <button data-f="all" class="active">All</button>
+          <button data-f="available">Available</button>
+          <button data-f="reserved">Reserved</button>
+          <button data-f="sold">Sold</button>
+        </div>
+        <button class="btn ghost small" id="btnImport">Import CSV / JSON</button>
+        <button class="btn ghost small" id="btnExportCsv">Export CSV</button>
+        <button class="btn ghost small" id="btnTemplate">CSV template</button>
+        <input type="file" id="importFile" accept=".json,.csv,application/json,text/csv" hidden />
+      </div>
+      <div class="tablecard">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:54px"></th>
+              <th>Item</th>
+              <th class="colhide">Size</th>
+              <th class="colhide">Price</th>
+              <th>Status</th>
+              <th style="text-align:right">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <footer>BPM closet admin · data saved in this browser until you download &amp; publish</footer>
+  </main>
+</div>
+
+<!-- Datalists for quick suggestions -->
+<datalist id="dl-brand"></datalist>
+<datalist id="dl-size"></datalist>
+<datalist id="dl-category"></datalist>
+<datalist id="dl-color"></datalist>
+<datalist id="dl-condition"><option value="New with tags"><option value="Like new"><option value="Good condition"><option value="Fair condition"></datalist>
+
+<!-- Publishing settings modal -->
+<div class="smodal" id="smodal">
+  <div class="back" data-sclose></div>
+  <div class="card">
+    <h2>Publishing settings</h2>
+    <div class="sd">Connect the panel to your GitHub repository so <b>Publish</b> updates the shop in one click. You only do this once per device.</div>
+    <div class="fw"><label class="lab" for="gh-owner">GitHub username</label><input class="in" id="gh-owner" placeholder="e.g. bpmcloset" autocapitalize="off" /></div>
+    <div class="fw"><label class="lab" for="gh-repo">Repository name</label><input class="in" id="gh-repo" placeholder="e.g. bpm-closet" autocapitalize="off" /></div>
+    <div class="fw"><label class="lab" for="gh-branch">Branch</label><input class="in" id="gh-branch" value="main" autocapitalize="off" /></div>
+    <div class="fw"><label class="lab" for="gh-token">Access token</label><input class="in" id="gh-token" type="password" placeholder="github_pat_…  or  ghp_…" autocapitalize="off" />
+      <div class="hint">Stored only in this browser. Never put it inside the website files.</div>
+    </div>
+    <div class="ok" id="ghMsg"></div>
+    <div style="display:flex; gap:10px; margin-top:6px">
+      <button class="btn primary" id="ghSave" style="flex:1">Save &amp; test</button>
+      <button class="btn ghost" data-sclose>Close</button>
+    </div>
+    <div class="steps">
+      <b>How to create the token (2 min):</b><br/>
+      1 · In GitHub: your avatar → <b>Settings</b> → <b>Developer settings</b> → <b>Personal access tokens → Fine-grained tokens</b> → <b>Generate new token</b>.<br/>
+      2 · Name it (e.g. “bpm publish”), set a long expiration, and under <b>Repository access</b> pick <b>Only select repositories</b> → your repo.<br/>
+      3 · Under <b>Permissions → Repository permissions</b> set <b>Contents</b> to <b>Read and write</b>. Generate and copy it here.
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ╔═══════════════════════════════════════════════════════════════════════╗
+   ║   ADMIN CONFIGURATION — edit this                                     ║
+   ╚═══════════════════════════════════════════════════════════════════════╝ */
+const ADMIN = {
+  // Change this passphrase to something only you know.
+  passphrase: "bpm-admin",
+  currency: "€"
+};
+
+const LS_KEY = "bpm_items_v1";   // where your working copy is kept in this browser
+const SES_KEY = "bpm_admin_ok";  // remembers you're unlocked during this tab session
+
+/* ── helpers ──────────────────────────────────────────────────────────── */
+const $=s=>document.querySelector(s), $$=s=>Array.from(document.querySelectorAll(s));
+const norm=s=>(s||"").toString().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim();
+const money=n=>ADMIN.currency+Number(n||0).toLocaleString("en-GB",{minimumFractionDigits:2,maximumFractionDigits:2});
+const COLORS={"black":"#1b1b1b","white":"#f7f7f5","grey":"#9ca3af","gray":"#9ca3af","navy":"#1f2a44","blue":"#3257a8","mid blue":"#3f6fb0","denim blue":"#4a6079","red":"#b3261e","burgundy":"#6e2436","pink":"#e6a4b4","green":"#3f6b4a","olive":"#6b6b3a","khaki":"#7c7b52","yellow":"#e3c04b","mustard":"#caa53a","orange":"#cc6b3f","brown":"#6b4f3a","camel":"#c19a6b","beige":"#d8cbb6","cream":"#efe7d6","purple":"#6b4e71","lilac":"#b3a0cf","gold":"#c4a35a","silver":"#c9c9cf"};
+const STATUS={available:["Available","var(--accent)"],reserved:["Reserved","var(--amber)"],sold:["Sold","var(--sold)"]};
+function normalizePhoto(url){ if(!url) return ""; const m=url.match(/\/file\/d\/([^/]+)/)||url.match(/[?&]id=([^&]+)/); if(url.includes("drive.google.com")&&m) return "https://drive.google.com/thumbnail?id="+m[1]+"&sz=w800"; return url; }
+function placeholder(color,category){ let base=COLORS[norm(color)]||"#cfccc4"; const txt=(category||"Item").toUpperCase(); const svg=`<svg xmlns='http://www.w3.org/2000/svg' width='600' height='800' viewBox='0 0 600 800'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='${base}' stop-opacity='.32'/><stop offset='1' stop-color='#f4f3ef'/></linearGradient></defs><rect width='600' height='800' fill='url(#g)'/><path d='M300 300a30 30 0 0 0-12 57l.3 16-118 70a26 26 0 0 0-13 22v18a18 18 0 0 0 18 18h249a18 18 0 0 0 18-18v-18a26 26 0 0 0-13-22l-118-70 .3-16A30 30 0 0 0 300 300Z' fill='none' stroke='${base}' stroke-opacity='.5' stroke-width='6' stroke-linejoin='round'/><text x='300' y='560' font-family='Inter,sans-serif' font-size='22' letter-spacing='3' fill='${base}' fill-opacity='.7' text-anchor='middle'>${txt}</text></svg>`; return "data:image/svg+xml;charset=utf-8,"+encodeURIComponent(svg); }
+function toast(msg){ const el=$("#toast"); el.innerHTML=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l4 4 10-11"/></svg>${msg}`; el.classList.add("show"); clearTimeout(toast._t); toast._t=setTimeout(()=>el.classList.remove("show"),2400); }
+function toastAction(msg,label,fn,ms=6000){ const el=$("#toast"); el.innerHTML=`${msg} <button class="undo" id="toastBtn">${label}</button>`; el.classList.add("show"); clearTimeout(toast._t); $("#toastBtn").onclick=()=>{ el.classList.remove("show"); fn(); }; toast._t=setTimeout(()=>el.classList.remove("show"),ms); }
+
+/* ── data state ───────────────────────────────────────────────────────── */
+let items = [];     // array of raw item objects (same fields as items.json)
+let editIndex = -1; // -1 = adding new; otherwise editing items[editIndex]
+let dirty = false;
+let lastDeleted = null; // {item, idx} for Undo
+
+function markDirty(v){
+  dirty=v; $("#dirty").classList.toggle("show",v);
+  const pub=$("#pubState");
+  if(v){ pub.className="pub pending"; $("#pubTxt").textContent="Pending changes"; }
+  else { pub.className="pub ok"; $("#pubTxt").textContent="Published ✓"; }
+}
+function saveLocal(){ try{ localStorage.setItem(LS_KEY, JSON.stringify(items)); }catch(e){} }
+
+/* Load order: local working copy → published items.json → empty */
+async function loadData(){
+  let local=null;
+  try{ const raw=localStorage.getItem(LS_KEY); if(raw) local=JSON.parse(raw); }catch(e){}
+  if(local && Array.isArray(local)){ items=local; markDirty(true); return; }
+  try{ const r=await fetch("items.json",{cache:"no-store"}); if(r.ok){ const j=await r.json(); if(Array.isArray(j)){ items=j; markDirty(false); return; } } }catch(e){}
+  items=[]; markDirty(false);
+}
+
+/* ── render: metrics ──────────────────────────────────────────────────── */
+function renderMetrics(){
+  const avail=items.filter(p=>p.status==="available");
+  const reserved=items.filter(p=>p.status==="reserved");
+  const sold=items.filter(p=>p.status==="sold");
+  const availValue=avail.reduce((s,p)=>s+Number(p.price||0),0);
+  const soldValue=sold.reduce((s,p)=>s+Number(p.price||0),0);
+  const cards=[
+    ["Total items", items.length, ""],
+    ["Available", avail.length, "accent"],
+    ["Reserved", reserved.length, ""],
+    ["Sold", sold.length, ""],
+    ["Available value", money(availValue), ""],
+    ["Sold value", money(soldValue), ""]
+  ];
+  $("#metrics").innerHTML = cards.map(([k,v,c])=>`<div class="metric ${c}"><div class="v">${v}</div><div class="k">${k}</div></div>`).join("");
+}
+
+/* ── render: datalists ────────────────────────────────────────────────── */
+function fillDatalist(id,field){ const vals=[...new Set(items.map(p=>p[field]).filter(Boolean))].sort((a,b)=>(""+a).localeCompare(""+b)); $(id).innerHTML=vals.map(v=>`<option value="${v.replace(/"/g,'&quot;')}">`).join(""); }
+function refreshDatalists(){ fillDatalist("#dl-brand","brand"); fillDatalist("#dl-size","size"); fillDatalist("#dl-category","category"); fillDatalist("#dl-color","color"); }
+
+/* ── render: table ────────────────────────────────────────────────────── */
+let tableFilter="all";
+function renderTable(){
+  const q=norm($("#tsearch").value);
+  const rows = items.map((p,idx)=>({p,idx}))
+    .filter(({p})=> tableFilter==="all" || p.status===tableFilter)
+    .filter(({p})=>!q || norm(p.name+" "+p.brand).includes(q));
+  $("#invCount").textContent = items.length+" total";
+  const tb=$("#tbody");
+  if(rows.length===0){ tb.innerHTML=`<tr><td colspan="6" class="tempty">${items.length===0?"No items yet. Add your first one above.":"No matches."}</td></tr>`; return; }
+  tb.innerHTML = rows.map(({p,idx})=>{
+    const img = p.photo ? normalizePhoto(p.photo) : placeholder(p.color,p.category);
+    const st = STATUS[p.status]||["—","var(--muted)"];
+    return `<tr>
+      <td><img class="tthumb" loading="lazy" referrerpolicy="no-referrer" src="${img}" onerror="this.src='${placeholder(p.color,p.category)}'" alt=""></td>
+      <td><div class="tname">${esc(p.name||"(no name)")}</div><div class="tbrand">${esc(p.brand||"")}</div></td>
+      <td class="colhide">${esc(p.size||"–")}</td>
+      <td class="colhide">${money(p.price)}</td>
+      <td>
+        <select class="statussel" data-idx="${idx}" onchange="quickStatus(${idx}, this.value)">
+          <option value="available" ${p.status==="available"?"selected":""}>● Available</option>
+          <option value="reserved" ${p.status==="reserved"?"selected":""}>● Reserved</option>
+          <option value="sold" ${p.status==="sold"?"selected":""}>● Sold</option>
+        </select>
+      </td>
+      <td><div class="tactions">
+        <button class="btn small" onclick="editItem(${idx})">Edit</button>
+        <button class="btn small" onclick="dupItem(${idx})" title="Duplicate this item">Dup</button>
+        <button class="btn small danger" onclick="deleteItem(${idx})">Delete</button>
+      </div></td>
+    </tr>`;
+  }).join("");
+}
+function esc(s){ return (s||"").toString().replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+
+/* ── live preview of the form ─────────────────────────────────────────── */
+function renderPreview(){
+  const name=$("#i-name").value||"Item name";
+  const brand=$("#i-brand").value||"Brand";
+  const price=$("#i-price").value;
+  const size=$("#i-size").value||"–";
+  const color=$("#i-color").value, cat=$("#i-category").value;
+  const photo=$("#i-photo").value.trim();
+  const status=$("#i-status").value;
+  const img=$("#pv-img");
+  img.onerror=()=>{ img.onerror=null; img.src=placeholder(color,cat); };
+  img.src = photo ? normalizePhoto(photo) : placeholder(color,cat);
+  $("#pv-name").textContent=name;
+  $("#pv-brand").textContent=brand;
+  $("#pv-price").textContent=money(price);
+  $("#pv-size").textContent=size;
+  const badge=$("#pv-badge");
+  if(status==="sold"||status==="reserved"){ badge.style.display=""; badge.textContent=status==="sold"?"Sold":"Reserved"; }
+  else if($("#i-new").checked){ badge.style.display=""; badge.textContent="New"; }
+  else badge.style.display="none";
+}
+
+/* ── form: collect / fill / reset ─────────────────────────────────────── */
+function readForm(){
+  return {
+    photo:$("#i-photo").value.trim(),
+    name:$("#i-name").value.trim(),
+    brand:$("#i-brand").value.trim(),
+    size:$("#i-size").value.trim(),
+    category:$("#i-category").value.trim(),
+    color:$("#i-color").value.trim(),
+    condition:$("#i-condition").value.trim(),
+    price:$("#i-price").value===""?0:Number($("#i-price").value),
+    status:$("#i-status").value,
+    vintedLink:$("#i-vinted").value.trim(),
+    notes:$("#i-notes").value.trim(),
+    date:$("#i-date").value||"",
+    isNew:$("#i-new").checked
+  };
+}
+function fillForm(p){
+  $("#i-photo").value=p.photo||""; $("#i-name").value=p.name||""; $("#i-brand").value=p.brand||"";
+  $("#i-size").value=p.size||""; $("#i-category").value=p.category||""; $("#i-color").value=p.color||"";
+  $("#i-condition").value=p.condition||""; $("#i-price").value=(p.price??""); $("#i-status").value=p.status||"available";
+  $("#i-vinted").value=p.vintedLink||""; $("#i-notes").value=p.notes||""; $("#i-date").value=p.date||""; $("#i-new").checked=!!p.isNew;
+  renderPreview();
+}
+function resetForm(keepSticky=false){
+  const keep = keepSticky ? { brand:$("#i-brand").value, category:$("#i-category").value, condition:$("#i-condition").value, date:$("#i-date").value, status:$("#i-status").value } : null;
+  ["#i-photo","#i-name","#i-brand","#i-size","#i-category","#i-color","#i-condition","#i-price","#i-vinted","#i-notes"].forEach(s=>$(s).value="");
+  $("#i-status").value="available"; $("#i-new").checked=false;
+  $("#i-date").value=new Date().toISOString().slice(0,10);
+  if(keep){ $("#i-brand").value=keep.brand; $("#i-category").value=keep.category; $("#i-condition").value=keep.condition; if(keep.date) $("#i-date").value=keep.date; $("#i-status").value=keep.status; }
+  editIndex=-1; $("#formTitle").textContent="Add item"; $("#btnSave").textContent="Add item"; $("#btnCancel").style.display="none";
+  syncChips(); renderPreview();
+}
+
+/* ── actions ──────────────────────────────────────────────────────────── */
+function saveItem(){
+  const data=readForm();
+  if(!data.name){ toast("Add a name first"); $("#i-name").focus(); return; }
+  if(editIndex<0){
+    const dup=items.find(p=>norm(p.name)===norm(data.name));
+    if(dup && !confirm(`You already have an item called “${dup.name}”. Add it anyway?`)) return;
+  }
+  if(editIndex>=0){ items[editIndex]=data; toast("Item updated"); }
+  else { items.unshift(data); toast("Item added — form kept your brand & category"); }
+  markDirty(true); saveLocal(); refreshAll(); resetForm(true);
+  $("#i-photo").focus();
+}
+function editItem(idx){ editIndex=idx; fillForm(items[idx]); $("#formTitle").textContent="Edit item"; $("#btnSave").textContent="Update item"; $("#btnCancel").style.display=""; document.querySelector(".panel").scrollIntoView({behavior:"smooth",block:"center"}); }
+function deleteItem(idx){
+  if(!confirm(`Delete “${items[idx].name||"this item"}”?`)) return;
+  lastDeleted={item:items[idx], idx};
+  items.splice(idx,1); markDirty(true); saveLocal(); refreshAll(); if(editIndex===idx) resetForm();
+  toastAction("Item deleted.","Undo",()=>{ if(!lastDeleted) return; items.splice(Math.min(lastDeleted.idx,items.length),0,lastDeleted.item); lastDeleted=null; markDirty(true); saveLocal(); refreshAll(); toast("Restored"); });
+}
+function quickStatus(idx,val){ items[idx].status=val; markDirty(true); saveLocal(); renderMetrics(); }
+function dupItem(idx){ const copy={...items[idx], name:(items[idx].name||"Item")+" (copy)"}; items.splice(idx+1,0,copy); markDirty(true); saveLocal(); refreshAll(); toast("Item duplicated — edit it"); editItem(idx+1); }
+window.editItem=editItem; window.deleteItem=deleteItem; window.quickStatus=quickStatus; window.dupItem=dupItem;
+
+/* ── CSV helpers ──────────────────────────────────────────────────────── */
+const CSV_COLS=["photo","name","brand","size","category","color","condition","price","status","vintedLink","notes","date","isNew"];
+function csvCell(v){ v=(v==null?"":String(v)); return /[",\n]/.test(v) ? '"'+v.replace(/"/g,'""')+'"' : v; }
+function toCSV(list){
+  const head=CSV_COLS.join(",");
+  const body=list.map(p=>CSV_COLS.map(c=> c==="isNew" ? (p.isNew?"true":"") : csvCell(p[c])).join(",")).join("\n");
+  return head+"\n"+body;
+}
+function parseCSV(text){
+  const rows=[]; let row=[], cell="", q=false;
+  text=text.replace(/\r\n/g,"\n").replace(/\r/g,"\n");
+  for(let i=0;i<text.length;i++){ const ch=text[i];
+    if(q){ if(ch==='"'){ if(text[i+1]==='"'){ cell+='"'; i++; } else q=false; } else cell+=ch; }
+    else { if(ch==='"') q=true; else if(ch===","){ row.push(cell); cell=""; } else if(ch==="\n"){ row.push(cell); rows.push(row); row=[]; cell=""; } else cell+=ch; }
+  }
+  if(cell!==""||row.length){ row.push(cell); rows.push(row); }
+  if(!rows.length) return [];
+  const head=rows.shift().map(h=>h.trim());
+  return rows.filter(r=>r.some(c=>c!=="")).map(r=>{
+    const o={}; head.forEach((h,i)=>o[h]=(r[i]||"").trim());
+    return {
+      photo:o.photo||"", name:o.name||"", brand:o.brand||"", size:o.size||"", category:o.category||"",
+      color:o.color||"", condition:o.condition||"", price:o.price?Number(o.price):0, status:(o.status||"available").toLowerCase(),
+      vintedLink:o.vintedLink||o.vinted||"", notes:o.notes||"", date:o.date||"",
+      isNew:/^(true|1|yes|si|sí)$/i.test(o.isNew||"")
+    };
+  });
+}
+function downloadFile(name,content,type){ const blob=new Blob([content],{type}); const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),1000); }
+function exportCSV(){ downloadFile("items.csv", toCSV(items), "text/csv"); toast("CSV exported (backup)"); }
+function downloadTemplate(){
+  const sample=[{photo:"https://drive.google.com/file/d/PASTE_ID/view",name:"Example item",brand:"Zara",size:"M",category:"Shirts",color:"Navy",condition:"Like new",price:14.99,status:"available",vintedLink:"",notes:"Length 70 cm",date:new Date().toISOString().slice(0,10),isNew:true}];
+  downloadFile("template.csv", toCSV(sample), "text/csv"); toast("Template downloaded — fill it in a spreadsheet");
+}
+function handleImport(file){
+  const reader=new FileReader();
+  reader.onload=()=>{
+    let incoming=[];
+    try{
+      if(/\.json$/i.test(file.name) || reader.result.trim().startsWith("[")){ incoming=JSON.parse(reader.result); }
+      else incoming=parseCSV(reader.result);
+    }catch(e){ toast("Couldn't read that file"); return; }
+    if(!Array.isArray(incoming)||!incoming.length){ toast("No items found in the file"); return; }
+    const replace=confirm(`Found ${incoming.length} items.\n\nOK = REPLACE everything with this file.\nCancel = ADD them to your current list.`);
+    items = replace ? incoming : items.concat(incoming);
+    markDirty(true); saveLocal(); refreshAll();
+    toast((replace?"Replaced with ":"Added ")+incoming.length+" items");
+  };
+  reader.readAsText(file);
+}
+
+/* ── download / publish ───────────────────────────────────────────────── */
+
+/* GitHub publishing: the panel commits items.json to your repo using a
+   fine-grained personal token (stored ONLY in this browser). */
+const GH_KEY="bpm_gh_cfg";
+function ghCfg(){ try{ return JSON.parse(localStorage.getItem(GH_KEY))||null; }catch(e){ return null; } }
+function ghHeaders(t){ return {"Authorization":"Bearer "+t,"Accept":"application/vnd.github+json","X-GitHub-Api-Version":"2022-11-28"}; }
+function utf8b64(s){ return btoa(unescape(encodeURIComponent(s))); }
+
+function openSettings(){
+  const c=ghCfg()||{};
+  $("#gh-owner").value=c.owner||""; $("#gh-repo").value=c.repo||""; $("#gh-branch").value=c.branch||"main"; $("#gh-token").value=c.token||"";
+  $("#ghMsg").textContent=""; $("#smodal").classList.add("open");
+}
+function closeSettings(){ $("#smodal").classList.remove("open"); }
+
+async function saveAndTestGh(){
+  const cfg={ owner:$("#gh-owner").value.trim(), repo:$("#gh-repo").value.trim(), branch:$("#gh-branch").value.trim()||"main", token:$("#gh-token").value.trim() };
+  const msg=$("#ghMsg");
+  if(!cfg.owner||!cfg.repo||!cfg.token){ msg.textContent="Fill in username, repository and token."; msg.style.color="var(--danger)"; return; }
+  msg.textContent="Testing…"; msg.style.color="var(--muted)";
+  try{
+    const r=await fetch(`https://api.github.com/repos/${cfg.owner}/${cfg.repo}`,{headers:ghHeaders(cfg.token)});
+    if(!r.ok) throw new Error(r.status===404?"Repo not found (check username/repo, and that the token can access it)":"Token rejected ("+r.status+")");
+    localStorage.setItem(GH_KEY,JSON.stringify(cfg));
+    msg.textContent="✓ Connected to "+cfg.owner+"/"+cfg.repo+" — you can Publish now"; msg.style.color="var(--accent)";
+  }catch(e){ msg.textContent="✗ "+e.message; msg.style.color="var(--danger)"; }
+}
+
+async function publish(){
+  const cfg=ghCfg();
+  if(!cfg||!cfg.token){ openSettings(); toast("Set up publishing first (one time)"); return; }
+  const btn=$("#btnPublish"); const prev=btn.innerHTML;
+  btn.disabled=true; btn.innerHTML="Publishing…";
+  try{
+    const path="items.json";
+    const base=`https://api.github.com/repos/${cfg.owner}/${cfg.repo}/contents/${path}`;
+    // 1 · current file SHA (needed to update; absent if file doesn't exist yet)
+    let sha=null;
+    const g=await fetch(base+"?ref="+encodeURIComponent(cfg.branch),{headers:ghHeaders(cfg.token)});
+    if(g.ok){ const j=await g.json(); sha=j.sha||null; }
+    else if(g.status!==404){ throw new Error("Couldn't read the repo ("+g.status+"). Check the token."); }
+    // 2 · commit the new content
+    const body={ message:"Update catalogue ("+items.length+" items) · from admin panel", content:utf8b64(JSON.stringify(items,null,2)), branch:cfg.branch };
+    if(sha) body.sha=sha;
+    const p=await fetch(base,{method:"PUT",headers:{...ghHeaders(cfg.token),"Content-Type":"application/json"},body:JSON.stringify(body)});
+    if(!p.ok){ const t=await p.text(); throw new Error("GitHub rejected the update ("+p.status+")"); }
+    markDirty(false); try{ localStorage.removeItem(LS_KEY); }catch(e){}
+    toast("Published ✓ · the shop updates in ~1 minute");
+  }catch(e){
+    toast("✗ "+e.message);
+  }finally{ btn.disabled=false; btn.innerHTML=prev; }
+}
+
+
+function downloadJSON(){
+  const blob=new Blob([JSON.stringify(items,null,2)],{type:"application/json"});
+  const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="items.json"; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+  markDirty(false);
+  toast("Downloaded · now upload items.json to GitHub");
+}
+async function reloadPublished(){
+  if(dirty && !confirm("This will discard your local changes and load the published items.json. Continue?")) return;
+  try{ localStorage.removeItem(LS_KEY); }catch(e){}
+  await loadData(); refreshAll(); toast("Loaded the published catalogue");
+}
+
+function refreshAll(){ renderMetrics(); renderTable(); refreshDatalists(); $("#updated").textContent="updated "+new Date().toLocaleString("en-GB",{day:"2-digit",month:"short",hour:"2-digit",minute:"2-digit"}); }
+
+/* ── theme ────────────────────────────────────────────────────────────── */
+const SUN=`<circle cx="12" cy="12" r="4.5"/><path d="M12 2v2M12 20v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M2 12h2M20 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4" stroke-linecap="round"/>`;
+const MOON=`<path d="M20 14.5A8 8 0 1 1 9.5 4 6.5 6.5 0 0 0 20 14.5Z"/>`;
+function setTheme(t){ document.documentElement.setAttribute("data-theme",t); $("#themeIcon").innerHTML=t==="dark"?SUN:MOON; try{ localStorage.setItem("theme",t); }catch(e){} }
+(function(){ let t="light"; try{ t=localStorage.getItem("theme"); }catch(e){} if(!t) t=matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"; setTheme(t); })();
+
+/* ── gate / unlock ────────────────────────────────────────────────────── */
+async function unlock(){
+  $("#gate").style.display="none"; $("#app").style.display="block";
+  try{ sessionStorage.setItem(SES_KEY,"1"); }catch(e){}
+  await loadData(); resetForm(); refreshAll();
+}
+function tryEnter(){
+  const v=$("#pass").value;
+  if(v===ADMIN.passphrase){ unlock(); }
+  else { $("#passErr").textContent="Wrong passphrase"; $("#pass").select(); }
+}
+function lock(){ try{ sessionStorage.removeItem(SES_KEY); }catch(e){} location.reload(); }
+
+/* ── wire up ──────────────────────────────────────────────────────────── */
+$("#enter").addEventListener("click",tryEnter);
+$("#pass").addEventListener("keydown",e=>{ if(e.key==="Enter") tryEnter(); });
+$("#btnSave").addEventListener("click",saveItem);
+$("#btnCancel").addEventListener("click",resetForm);
+$("#btnDownload").addEventListener("click",downloadJSON);
+$("#btnReload").addEventListener("click",reloadPublished);
+$("#btnLock").addEventListener("click",lock);
+$("#btnPublish").addEventListener("click",publish);
+$("#btnSettings").addEventListener("click",openSettings);
+$("#ghSave").addEventListener("click",saveAndTestGh);
+$("#smodal").addEventListener("click",e=>{ if(e.target.dataset.sclose!==undefined) closeSettings(); });
+
+/* Paste image link from clipboard */
+$("#btnPaste").addEventListener("click",async()=>{
+  try{ const t=await navigator.clipboard.readText(); if(t){ $("#i-photo").value=t.trim(); renderPreview(); toast("Link pasted — check the preview"); } else toast("Clipboard is empty"); }
+  catch(e){ toast("Tap the field and paste manually (Ctrl/Cmd+V)"); $("#i-photo").focus(); }
+});
+
+/* Quick chips: one tap fills the field */
+function syncChips(){
+  $$(".qchips").forEach(g=>{ const v=$("#"+g.dataset.for).value.trim().toLowerCase();
+    g.querySelectorAll(".qchip").forEach(c=>c.classList.toggle("on",c.textContent.trim().toLowerCase()===v)); });
+}
+$$(".qchips").forEach(g=>g.addEventListener("click",e=>{
+  const b=e.target.closest(".qchip"); if(!b) return;
+  const input=$("#"+g.dataset.for);
+  input.value = (input.value.trim()===b.textContent.trim()) ? "" : b.textContent.trim();
+  syncChips(); renderPreview();
+}));
+["#i-size","#i-condition"].forEach(s=>$(s).addEventListener("input",syncChips));
+
+/* Enter anywhere in the form (except notes) = save */
+$$(".formgrid input.in, .formgrid select.in").forEach(el=>el.addEventListener("keydown",e=>{ if(e.key==="Enter"){ e.preventDefault(); saveItem(); } }));
+$("#btnTheme").addEventListener("click",()=>setTheme(document.documentElement.getAttribute("data-theme")==="dark"?"light":"dark"));
+$("#tsearch").addEventListener("input",renderTable);
+$$("#statusTabs button").forEach(b=>b.addEventListener("click",()=>{ tableFilter=b.dataset.f; $$("#statusTabs button").forEach(x=>x.classList.toggle("active",x===b)); renderTable(); }));
+$("#btnImport").addEventListener("click",()=>$("#importFile").click());
+$("#importFile").addEventListener("change",e=>{ const f=e.target.files[0]; if(f) handleImport(f); e.target.value=""; });
+$("#btnExportCsv").addEventListener("click",exportCSV);
+$("#btnTemplate").addEventListener("click",downloadTemplate);
+["#i-photo","#i-name","#i-brand","#i-size","#i-category","#i-color","#i-price","#i-status","#i-new"].forEach(s=>$(s).addEventListener("input",renderPreview));
+$("#i-status").addEventListener("change",renderPreview);
+
+/* If already unlocked in this tab session, skip the gate */
+(function(){ let ok=false; try{ ok=sessionStorage.getItem(SES_KEY)==="1"; }catch(e){} if(ok) unlock(); else $("#pass").focus(); })();
+</script>
+</body>
+</html>
