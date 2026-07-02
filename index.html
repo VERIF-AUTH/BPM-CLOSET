@@ -9,6 +9,11 @@
      ════════════════════════════════════════════════════════════════════ -->
 <title>BPM closet · Wardrobe</title>
 <meta name="description" content="Browse available items. Filter by brand, size, category and price." />
+<meta name="theme-color" content="#FAFAF7" />
+<!-- Social cards: how the link looks when shared in WhatsApp / Vinted chat -->
+<meta property="og:title" content="BPM closet" />
+<meta property="og:description" content="My wardrobe catalogue — filter by brand, size and price." />
+<meta property="og:type" content="website" />
 
 <!-- FAVICON (minimal clothes hanger in SVG, no separate file needed) -->
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M16 6a2.6 2.6 0 0 0-1 5l.02 1.4L5 18.6a2.4 2.4 0 0 0-1 1.9V22a2 2 0 0 0 2 2h20a2 2 0 0 0 2-2v-1.5a2.4 2.4 0 0 0-1-1.9L18 12.4 18 11A2.6 2.6 0 0 0 16 6Z' fill='none' stroke='%231b1b19' stroke-width='1.8' stroke-linejoin='round'/%3E%3C/svg%3E" />
@@ -172,6 +177,12 @@ select.field, .pricebox input{height:42px; border:1px solid var(--line); backgro
 .toast.show{opacity:1; transform:translate(-50%,0)}
 .toast svg{width:17px; height:17px}
 footer{margin:60px 0 40px; text-align:center; color:var(--muted); font-size:12.5px}
+.totop{position:fixed; right:18px; bottom:22px; z-index:40; width:44px; height:44px; border-radius:50%; border:1px solid var(--line); background:var(--surface); color:var(--ink); box-shadow:var(--shadow); display:flex; align-items:center; justify-content:center; opacity:0; pointer-events:none; transform:translateY(8px); transition:.2s}
+.totop.show{opacity:1; pointer-events:auto; transform:none}
+.totop svg{width:19px; height:19px}
+#sentinel{height:1px}
+.loadmore{display:none; margin:22px auto 0; }
+.loadmore.show{display:flex}
 @media(prefers-reduced-motion:reduce){*{animation:none!important; transition:none!important}}
 </style>
 </head>
@@ -241,8 +252,14 @@ footer{margin:60px 0 40px; text-align:center; color:var(--muted); font-size:12.5
   </div>
 
   <div id="results"></div>
+  <div id="sentinel"></div>
+  <button class="icon-btn loadmore" id="btnMore">Show more items</button>
   <footer>BPM closet · Catalogue kept up to date by hand</footer>
 </main>
+
+<button class="totop" id="toTop" aria-label="Back to top" title="Back to top">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5m0 0-6 6m6-6 6 6"/></svg>
+</button>
 
 <div class="modal" id="modal" role="dialog" aria-modal="true" aria-label="Item detail">
   <div class="backdrop" data-close></div>
@@ -325,22 +342,37 @@ function filterItems(){
 }
 function badge(p){ if(p.status==="sold") return `<span class="badge sold">Sold</span>`; if(p.status==="reserved") return `<span class="badge reserved">Reserved</span>`; if(p.isNew) return `<span class="badge new">New</span>`; return ""; }
 
+/* Progressive rendering: with hundreds of items, we paint them in batches
+   of BATCH as you scroll, so the page stays fast even with 400+ photos. */
+const BATCH=60;
+let CUR=[], SHOWN=0;
+
+function rowHTML(p){ const sold=p.status==="sold"; return `<button class="row ${sold?'is-sold':''}" data-id="${p.id}"><div class="rthumb"><img alt="" referrerpolicy="no-referrer" data-src="${p.photo}" data-id="${p.id}"></div><div class="rmain"><div class="rname">${p.name}</div><div class="rsub">${p.brand||"—"}<span class="dot">·</span>Size ${p.size||"—"}<span class="dot">·</span>${p.category||""}</div></div><div class="rprice ${sold?'sold':''}">${money(p.price)}</div></button>`; }
+function cardHTML(p){ const sold=p.status==="sold"; return `<button class="card ${sold?'is-sold':''}" data-id="${p.id}"><div class="thumb">${badge(p)}<img alt="${p.name}" referrerpolicy="no-referrer" data-src="${p.photo}" data-id="${p.id}"></div><div class="meta"><div class="name">${p.name}</div><div class="brand">${p.brand||"No brand"}</div><div class="foot"><span class="price ${sold?'sold':''}">${money(p.price)}</span><span class="size-pill">${p.size||"–"}</span></div></div></button>`; }
+
 function paint(items){
+  CUR=items; SHOWN=Math.min(BATCH,items.length);
   const cont=$("#results");
-  if(items.length===0){ cont.innerHTML=`<div class="empty"><div class="big">Nothing here</div>No items match these filters.<div><button class="icon-btn" onclick="clearFilters()">Clear filters</button></div></div>`; return; }
-  if(state.view==="list"){
-    cont.innerHTML=`<div class="list">`+items.map(p=>{ const sold=p.status==="sold"; return `<button class="row ${sold?'is-sold':''}" data-id="${p.id}"><div class="rthumb"><img alt="" referrerpolicy="no-referrer" data-src="${p.photo}" data-id="${p.id}"></div><div class="rmain"><div class="rname">${p.name}</div><div class="rsub">${p.brand||"—"}<span class="dot">·</span>Size ${p.size||"—"}<span class="dot">·</span>${p.category||""}</div></div><div class="rprice ${sold?'sold':''}">${money(p.price)}</div></button>`; }).join("")+`</div>`;
-  } else {
-    cont.innerHTML=`<div class="grid">`+items.map(p=>{ const sold=p.status==="sold"; return `<button class="card ${sold?'is-sold':''}" data-id="${p.id}"><div class="thumb">${badge(p)}<img alt="${p.name}" referrerpolicy="no-referrer" data-src="${p.photo}" data-id="${p.id}"></div><div class="meta"><div class="name">${p.name}</div><div class="brand">${p.brand||"No brand"}</div><div class="foot"><span class="price ${sold?'sold':''}">${money(p.price)}</span><span class="size-pill">${p.size||"–"}</span></div></div></button>`; }).join("")+`</div>`;
-  }
-  loadImages();
-  $$("[data-id]").forEach(el=>{ if(el.tagName!=="IMG") el.addEventListener("click",()=>openModal(el.dataset.id)); });
+  if(items.length===0){ cont.innerHTML=`<div class="empty"><div class="big">Nothing here</div>No items match these filters.<div><button class="icon-btn" onclick="clearFilters()">Clear filters</button></div></div>`; updateMore(); return; }
+  const slice=items.slice(0,SHOWN);
+  cont.innerHTML = state.view==="list"
+    ? `<div class="list">`+slice.map(rowHTML).join("")+`</div>`
+    : `<div class="grid">`+slice.map(cardHTML).join("")+`</div>`;
+  loadImages(); updateMore();
 }
+function appendMore(){
+  if(SHOWN>=CUR.length) return;
+  const next=CUR.slice(SHOWN, SHOWN+BATCH); SHOWN+=next.length;
+  const box=$("#results .list")||$("#results .grid"); if(!box) return;
+  box.insertAdjacentHTML("beforeend", next.map(state.view==="list"?rowHTML:cardHTML).join(""));
+  loadImages(); updateMore();
+}
+function updateMore(){ $("#btnMore").classList.toggle("show", SHOWN<CUR.length); }
 let io;
 function loadImages(){
   if(io) io.disconnect();
   io=new IntersectionObserver(es=>{ es.forEach(e=>{ if(!e.isIntersecting) return; const img=e.target,p=ITEMS.find(x=>x.id===img.dataset.id); img.onerror=()=>{ img.onerror=null; img.src=placeholder(p); img.classList.add("loaded"); }; img.onload=()=>img.classList.add("loaded"); img.src=img.dataset.src||placeholder(p); if(!img.dataset.src) img.classList.add("loaded"); io.unobserve(img); }); },{rootMargin:"300px"});
-  $$("#results img").forEach(img=>io.observe(img));
+  $$("#results img:not([src])").forEach(img=>io.observe(img));
 }
 function paintCount(n){ $("#count").innerHTML=`<b>${n}</b> ${n===1?"item found":"items found"}`; }
 
@@ -403,15 +435,33 @@ $("#btnClear").addEventListener("click",clearFilters);
 $("#viewGrid").addEventListener("click",()=>setView("grid"));
 $("#viewList").addEventListener("click",()=>setView("list"));
 $("#btnTheme").addEventListener("click",()=>setTheme(document.documentElement.getAttribute("data-theme")==="dark"?"light":"dark"));
-$("#btnShare").addEventListener("click",()=>copy(location.href,"Filtered link copied"));
+/* Share: on phones opens the native share sheet (WhatsApp, Vinted chat…);
+   elsewhere falls back to copying the link. */
+$("#btnShare").addEventListener("click",async()=>{
+  const url=location.href;
+  if(navigator.share){ try{ await navigator.share({title:CONFIG.title,url}); return; }catch(e){ if(e.name==="AbortError") return; } }
+  copy(url,"Filtered link copied");
+});
 $("#btnFilters").addEventListener("click",()=>$("#filterbar").classList.toggle("open"));
 $("#modal").addEventListener("click",e=>{ if(e.target.dataset.close!==undefined) closeModal(); });
 document.addEventListener("keydown",e=>{ if(e.key==="Escape"&&$("#modal").classList.contains("open")) closeModal(); });
 
+/* One delegated click handler for all cards/rows (works for batches added later) */
+$("#results").addEventListener("click",e=>{ const el=e.target.closest("[data-id]"); if(el && el.tagName!=="IMG") openModal(el.dataset.id); });
+
+/* Infinite scroll: when the sentinel enters the viewport, paint the next batch */
+new IntersectionObserver(es=>{ if(es.some(x=>x.isIntersecting)) appendMore(); },{rootMargin:"600px"}).observe($("#sentinel"));
+$("#btnMore").addEventListener("click",appendMore);
+
+/* Back to top */
+const toTop=$("#toTop");
+addEventListener("scroll",()=>toTop.classList.toggle("show", scrollY>900),{passive:true});
+toTop.addEventListener("click",()=>scrollTo({top:0,behavior:"smooth"}));
+
 /* Boot: load items.json, fall back to embedded seed if it can't be fetched */
 async function boot(){
   let raw=SEED_DATA;
-  try{ const r=await fetch("items.json",{cache:"no-store"}); if(r.ok){ const j=await r.json(); if(Array.isArray(j)&&j.length) raw=j; } }catch(e){ /* local preview → seed */ }
+  try{ const r=await fetch("items.json?v="+Date.now(),{cache:"no-store"}); if(r.ok){ const j=await r.json(); if(Array.isArray(j)&&j.length) raw=j; } }catch(e){ /* local preview → seed */ }
   buildItems(raw);
   fillSelect("#f-marca","brand"); fillSelect("#f-categoria","category"); fillSelect("#f-talla","size"); fillSelect("#f-color","color");
   readURL(); apply();

@@ -226,7 +226,7 @@ footer{margin:48px 0 36px; text-align:center; color:var(--muted); font-size:12px
                 <input class="in" id="i-photo" placeholder="Paste an image link here…" />
                 <button class="btn small" id="btnPaste" type="button" title="Paste from clipboard">Paste</button>
               </div>
-              <div class="hint">In any browser: right-click the photo → <b>“Copy image address”</b> → paste it here (works with Vinted listing photos). Google Drive share links also work. Check the preview →</div>
+              <div class="hint">In any browser: right-click the photo → <b>“Copy image address”</b> → paste it here (works with Vinted listing photos). Google Drive share links also work. <span id="photoCheck"></span></div>
             </div>
             <div class="field-wrap full">
               <label class="lab" for="i-name">Name *</label>
@@ -414,15 +414,23 @@ function markDirty(v){
   const pub=$("#pubState");
   if(v){ pub.className="pub pending"; $("#pubTxt").textContent="Pending changes"; }
   else { pub.className="pub ok"; $("#pubTxt").textContent="Published ✓"; }
+  saveLocal(); // dirty state is always persisted together with the data
 }
-function saveLocal(){ try{ localStorage.setItem(LS_KEY, JSON.stringify(items)); }catch(e){} }
+function saveLocal(){ try{ localStorage.setItem(LS_KEY, JSON.stringify({items, dirty})); }catch(e){} }
 
-/* Load order: local working copy → published items.json → empty */
+/* Load order: local working copy (always trusted, whatever its dirty state)
+   → published items.json (first time on this device) → empty.
+   Note: we deliberately keep the local copy after a successful publish
+   (instead of deleting it) so refreshing the admin panel never looks like
+   it "lost" your latest edits while GitHub Pages is still redeploying. */
 async function loadData(){
-  let local=null;
-  try{ const raw=localStorage.getItem(LS_KEY); if(raw) local=JSON.parse(raw); }catch(e){}
-  if(local && Array.isArray(local)){ items=local; markDirty(true); return; }
-  try{ const r=await fetch("items.json",{cache:"no-store"}); if(r.ok){ const j=await r.json(); if(Array.isArray(j)){ items=j; markDirty(false); return; } } }catch(e){}
+  let stored=null;
+  try{ const raw=localStorage.getItem(LS_KEY); if(raw) stored=JSON.parse(raw); }catch(e){}
+  if(stored){
+    if(Array.isArray(stored)){ items=stored; markDirty(true); return; } // old format, migrate safely
+    if(stored.items){ items=stored.items; markDirty(!!stored.dirty); return; }
+  }
+  try{ const r=await fetch("items.json?v="+Date.now(),{cache:"no-store"}); if(r.ok){ const j=await r.json(); if(Array.isArray(j)){ items=j; markDirty(false); return; } } }catch(e){}
   items=[]; markDirty(false);
 }
 
@@ -662,8 +670,8 @@ async function publish(){
     if(sha) body.sha=sha;
     const p=await fetch(base,{method:"PUT",headers:{...ghHeaders(cfg.token),"Content-Type":"application/json"},body:JSON.stringify(body)});
     if(!p.ok){ const t=await p.text(); throw new Error("GitHub rejected the update ("+p.status+")"); }
-    markDirty(false); try{ localStorage.removeItem(LS_KEY); }catch(e){}
-    toast("Published ✓ · the shop updates in ~1 minute");
+    markDirty(false); // keeps your items locally, just stops flagging them as pending
+    toast("Published ✓ — can take a minute or two to show live (GitHub rebuilds the page)");
   }catch(e){
     toast("✗ "+e.message);
   }finally{ btn.disabled=false; btn.innerHTML=prev; }
@@ -738,6 +746,24 @@ $$(".qchips").forEach(g=>g.addEventListener("click",e=>{
 
 /* Enter anywhere in the form (except notes) = save */
 $$(".formgrid input.in, .formgrid select.in").forEach(el=>el.addEventListener("keydown",e=>{ if(e.key==="Enter"){ e.preventDefault(); saveItem(); } }));
+
+/* Live photo-link check: quietly tests the pasted URL and tells you if it loads */
+let tPhoto;
+function checkPhoto(){
+  const el=$("#photoCheck"); const url=$("#i-photo").value.trim();
+  if(!url){ el.textContent=""; return; }
+  el.textContent="⏳ checking…"; el.style.color="var(--muted)";
+  const probe=new Image(); probe.referrerPolicy="no-referrer";
+  const t=setTimeout(()=>{ probe.src=""; fail(); },8000);
+  probe.onload=()=>{ clearTimeout(t); el.textContent="✓ Image loads"; el.style.color="var(--accent)"; };
+  probe.onerror=()=>{ clearTimeout(t); fail(); };
+  function fail(){ el.textContent="✗ Doesn't load here — open the link in a new tab to be sure (some CDNs block previews)"; el.style.color="var(--danger)"; }
+  probe.src=normalizePhoto(url);
+}
+$("#i-photo").addEventListener("input",()=>{ clearTimeout(tPhoto); tPhoto=setTimeout(checkPhoto,400); });
+
+/* Escape closes the settings modal */
+document.addEventListener("keydown",e=>{ if(e.key==="Escape"&&$("#smodal").classList.contains("open")) closeSettings(); });
 $("#btnTheme").addEventListener("click",()=>setTheme(document.documentElement.getAttribute("data-theme")==="dark"?"light":"dark"));
 $("#tsearch").addEventListener("input",renderTable);
 $$("#statusTabs button").forEach(b=>b.addEventListener("click",()=>{ tableFilter=b.dataset.f; $$("#statusTabs button").forEach(x=>x.classList.toggle("active",x===b)); renderTable(); }));
