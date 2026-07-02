@@ -1,5 +1,20 @@
 [
   {
+    "photo": "https://cdn-images.farfetch-contents.com/22/52/00/73/22520073_52493206_1000.jpg",
+    "name": "RIck Owens vans",
+    "brand": "Rick Owens",
+    "size": "44",
+    "category": "",
+    "color": "Black",
+    "condition": "",
+    "price": 280,
+    "status": "available",
+    "vintedLink": "",
+    "notes": "",
+    "date": "2026-07-02",
+    "isNew": false
+  },
+  {
     "photo": "https://images.unsplash.com/photo-1542272604-787c3835535d?auto=format&fit=crop&w=600&q=70",
     "name": "Straight high-waist jeans",
     "brand": "Levi's",
