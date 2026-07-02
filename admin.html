@@ -652,24 +652,49 @@ async function saveAndTestGh(){
   }catch(e){ msg.textContent="✗ "+e.message; msg.style.color="var(--danger)"; }
 }
 
+/* Fetches the freshest SHA of items.json straight from the branch's latest
+   commit tree (bypasses the CDN cache that causes 409 Conflict errors). */
+async function freshSha(cfg){
+  const h=ghHeaders(cfg.token); const bust="&_="+Date.now();
+  // latest commit on the branch → its tree → the file's blob sha
+  const b=await fetch(`https://api.github.com/repos/${cfg.owner}/${cfg.repo}/branches/${encodeURIComponent(cfg.branch)}?_=${Date.now()}`,{headers:h,cache:"no-store"});
+  if(!b.ok) return null;
+  const bj=await b.json(); const treeSha=bj.commit&&bj.commit.commit&&bj.commit.commit.tree&&bj.commit.commit.tree.sha;
+  if(!treeSha) return null;
+  const t=await fetch(`https://api.github.com/repos/${cfg.owner}/${cfg.repo}/git/trees/${treeSha}?recursive=1${bust}`,{headers:h,cache:"no-store"});
+  if(!t.ok) return null;
+  const tj=await t.json(); const f=(tj.tree||[]).find(x=>x.path==="items.json");
+  return f?f.sha:null;
+}
+
+async function putItems(cfg,sha){
+  const base=`https://api.github.com/repos/${cfg.owner}/${cfg.repo}/contents/items.json`;
+  const body={ message:"Update catalogue ("+items.length+" items) · from admin panel", content:utf8b64(JSON.stringify(items,null,2)), branch:cfg.branch };
+  if(sha) body.sha=sha;
+  return fetch(base,{method:"PUT",headers:{...ghHeaders(cfg.token),"Content-Type":"application/json"},body:JSON.stringify(body)});
+}
+
 async function publish(){
   const cfg=ghCfg();
   if(!cfg||!cfg.token){ openSettings(); toast("Set up publishing first (one time)"); return; }
   const btn=$("#btnPublish"); const prev=btn.innerHTML;
   btn.disabled=true; btn.innerHTML="Publishing…";
   try{
-    const path="items.json";
-    const base=`https://api.github.com/repos/${cfg.owner}/${cfg.repo}/contents/${path}`;
-    // 1 · current file SHA (needed to update; absent if file doesn't exist yet)
-    let sha=null;
-    const g=await fetch(base+"?ref="+encodeURIComponent(cfg.branch),{headers:ghHeaders(cfg.token)});
-    if(g.ok){ const j=await g.json(); sha=j.sha||null; }
-    else if(g.status!==404){ throw new Error("Couldn't read the repo ("+g.status+"). Check the token."); }
-    // 2 · commit the new content
-    const body={ message:"Update catalogue ("+items.length+" items) · from admin panel", content:utf8b64(JSON.stringify(items,null,2)), branch:cfg.branch };
-    if(sha) body.sha=sha;
-    const p=await fetch(base,{method:"PUT",headers:{...ghHeaders(cfg.token),"Content-Type":"application/json"},body:JSON.stringify(body)});
-    if(!p.ok){ const t=await p.text(); throw new Error("GitHub rejected the update ("+p.status+")"); }
+    // Try with the freshest SHA we can get (avoids stale-cache conflicts)
+    let sha=await freshSha(cfg);
+    let p=await putItems(cfg,sha);
+    // If GitHub still reports a conflict, re-read the real SHA and retry once
+    if(p.status===409){
+      sha=await freshSha(cfg);
+      p=await putItems(cfg,sha);
+    }
+    if(!p.ok){
+      let detail=""; try{ detail=(await p.json()).message||""; }catch(e){}
+      if(p.status===409) throw new Error("Conflict — try Publish once more in a few seconds.");
+      if(p.status===404) throw new Error("Repo/branch not found. Check username, repo and branch in settings.");
+      if(p.status===403||p.status===401) throw new Error("Token lacks permission. It needs Contents: Read and write on this repo.");
+      throw new Error("GitHub error "+p.status+(detail?" · "+detail:""));
+    }
     markDirty(false); // keeps your items locally, just stops flagging them as pending
     toast("Published ✓ — can take a minute or two to show live (GitHub rebuilds the page)");
   }catch(e){
