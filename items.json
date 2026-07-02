@@ -1,63 +1,44 @@
 [
   {
-    "photo": "https://images.unsplash.com/photo-1576995853123-5a10305d93c0?auto=format&fit=crop&w=600&q=70",
-    "name": "Oversized denim shirt", "brand": "Zara", "size": "M", "category": "Shirts",
-    "color": "Denim blue", "condition": "Like new", "price": 18.99, "status": "available",
-    "vintedLink": "", "notes": "Roomy cut, dropped shoulders. Length 72 cm, chest 56 cm.",
-    "date": "2025-06-02", "isNew": true
-  },
-  {
-    "photo": "https://images.unsplash.com/photo-1542272604-787c3835535d?auto=format&fit=crop&w=600&q=70",
-    "name": "Straight high-waist jeans", "brand": "Levi's", "size": "40", "category": "Jeans",
-    "color": "Mid blue", "condition": "Good condition", "price": 24.00, "status": "available",
-    "vintedLink": "", "notes": "Model 501. Slight natural wear at the hems.", "date": "2025-05-28"
-  },
-  {
-    "photo": "https://images.unsplash.com/photo-1595777457583-95e059d581b8?auto=format&fit=crop&w=600&q=70",
-    "name": "Linen midi dress", "brand": "Mango", "size": "S", "category": "Dresses",
-    "color": "Beige", "condition": "New with tags", "price": 29.90, "status": "available",
-    "vintedLink": "", "notes": "Unworn, tags attached. 100% linen.", "date": "2025-06-10", "isNew": true
-  },
-  {
-    "photo": "https://images.unsplash.com/photo-1591047139829-d91aecb6caea?auto=format&fit=crop&w=600&q=70",
-    "name": "Long wool overcoat", "brand": "COS", "size": "M", "category": "Coats",
-    "color": "Camel", "condition": "Like new", "price": 55.00, "status": "reserved",
-    "vintedLink": "", "notes": "Wool blend. Reserved until Friday.", "date": "2025-04-15"
-  },
-  {
-    "photo": "https://images.unsplash.com/photo-1556906781-9a412961c28c?auto=format&fit=crop&w=600&q=70",
-    "name": "Retro leather trainers", "brand": "Adidas", "size": "39", "category": "Trainers",
-    "color": "White", "condition": "Good condition", "price": 32.00, "status": "available",
-    "vintedLink": "", "notes": "Soles barely worn. Original box included.", "date": "2025-05-12"
-  },
-  {
-    "photo": "https://images.unsplash.com/photo-1620799140408-edc6dcb6d633?auto=format&fit=crop&w=600&q=70",
-    "name": "Chunky knit jumper", "brand": "H&M", "size": "L", "category": "Knitwear",
-    "color": "Green", "condition": "Good condition", "price": 14.50, "status": "sold",
-    "vintedLink": "", "notes": "Crew neck, cotton. Sold!", "date": "2025-03-30"
-  },
-  {
-    "photo": "https://images.unsplash.com/photo-1434389677669-e08b4cac3105?auto=format&fit=crop&w=600&q=70",
-    "name": "Bomber jacket", "brand": "Bershka", "size": "S", "category": "Jackets",
-    "color": "Black", "condition": "Like new", "price": 21.00, "status": "available",
-    "vintedLink": "", "notes": "Light padded lining. Gold zip.", "date": "2025-06-18"
-  },
-  {
     "photo": "https://images.unsplash.com/photo-1551488831-00ddcb6c6bd3?auto=format&fit=crop&w=600&q=70",
-    "name": "Basic cotton tee", "brand": "Uniqlo", "size": "M", "category": "T-shirts",
-    "color": "White", "condition": "New with tags", "price": 8.00, "status": "available",
-    "vintedLink": "", "notes": "Single unit from a broken pack. Supima cotton.", "date": "2025-06-20"
+    "name": "Basic cotton tee",
+    "brand": "Uniqlo",
+    "size": "M",
+    "category": "T-shirts",
+    "color": "White",
+    "condition": "New with tags",
+    "price": 8,
+    "status": "available",
+    "vintedLink": "",
+    "notes": "Single unit from a broken pack. Supima cotton.",
+    "date": "2025-06-20"
   },
   {
     "photo": "https://images.unsplash.com/photo-1591561954557-26941169b49e?auto=format&fit=crop&w=600&q=70",
-    "name": "Small crossbody bag", "brand": "Parfois", "size": "One size", "category": "Accessories",
-    "color": "Brown", "condition": "Good condition", "price": 16.00, "status": "available",
-    "vintedLink": "", "notes": "Magnetic clasp, adjustable strap.", "date": "2025-05-05"
+    "name": "Small crossbody bag",
+    "brand": "Parfois",
+    "size": "One size",
+    "category": "Accessories",
+    "color": "Brown",
+    "condition": "Good condition",
+    "price": 16,
+    "status": "available",
+    "vintedLink": "",
+    "notes": "Magnetic clasp, adjustable strap.",
+    "date": "2025-05-05"
   },
   {
     "photo": "https://images.unsplash.com/photo-1583744946564-b52ac1c389c8?auto=format&fit=crop&w=600&q=70",
-    "name": "Pleated midi skirt", "brand": "Stradivarius", "size": "S", "category": "Skirts",
-    "color": "Black", "condition": "Like new", "price": 13.99, "status": "available",
-    "vintedLink": "", "notes": "Elastic waist. Falls below the knee.", "date": "2025-06-08"
+    "name": "Pleated midi skirt",
+    "brand": "Stradivarius",
+    "size": "S",
+    "category": "Skirts",
+    "color": "Black",
+    "condition": "Like new",
+    "price": 13.99,
+    "status": "available",
+    "vintedLink": "",
+    "notes": "Elastic waist. Falls below the knee.",
+    "date": "2025-06-08"
   }
 ]
