@@ -116,6 +116,8 @@ select.field, .pricebox input{height:42px; border:1px solid var(--line); backgro
 .card.is-sold .thumb{border-style:dashed}
 .meta{padding:11px 2px 0}
 .meta .name{font-size:14px; font-weight:500; line-height:1.3; overflow:hidden; display:-webkit-box; -webkit-line-clamp:1; -webkit-box-orient:vertical}
+.card .thumb, .row .rthumb{cursor:default}
+.card, .row{cursor:pointer}
 .meta .brand{font-size:11.5px; color:var(--muted); text-transform:uppercase; letter-spacing:.07em; margin-top:3px; font-weight:500}
 .meta .foot{display:flex; align-items:center; justify-content:space-between; margin-top:9px; gap:8px}
 .price{font-size:15px; font-weight:600; font-variant-numeric:tabular-nums}
@@ -148,6 +150,15 @@ select.field, .pricebox input{height:42px; border:1px solid var(--line); backgro
 @keyframes fade{from{opacity:0}to{opacity:1}}
 @keyframes rise{from{transform:translateY(30px); opacity:.4}to{transform:none; opacity:1}}
 .sheet .close{position:absolute; top:12px; right:12px; z-index:3; width:36px; height:36px; border-radius:50%; border:none; background:color-mix(in srgb,var(--surface) 70%,transparent); backdrop-filter:blur(6px); color:var(--ink); display:flex; align-items:center; justify-content:center}
+.sheet-bar{display:none}
+.sheet-close-btn{border:1px solid var(--line); background:var(--surface); color:var(--ink); border-radius:99px; height:34px; padding:0 16px; font-size:13.5px; font-weight:600}
+@media(max-width:719px){
+  .modal{align-items:flex-start}
+  .sheet{margin-top:max(12px, env(safe-area-inset-top)); border-radius:18px 18px 0 0; max-height:88vh}
+  .sheet .close{display:none}
+  .sheet-bar{display:flex; align-items:center; justify-content:space-between; gap:12px; position:sticky; top:0; z-index:4; background:color-mix(in srgb,var(--surface) 92%,transparent); backdrop-filter:blur(8px); padding:11px 14px; border-bottom:1px solid var(--line)}
+  .sheet-bar-t{font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:.08em; color:var(--muted); overflow:hidden; white-space:nowrap; text-overflow:ellipsis}
+}
 .sheet-grid{display:grid; grid-template-columns:1fr}
 @media(min-width:720px){.sheet-grid{grid-template-columns:1fr 1fr}}
 .sheet-img{background:var(--surface-2); aspect-ratio:3/4; position:relative}
@@ -402,12 +413,21 @@ function openModal(id){
   }
   actions+=`<button class="btn" onclick="copyItem('${p.id}')">Copy link</button>`;
   const rows=[["Condition",p.condition||"—"],["Colour",sw+(p.color||"—")],["Category",p.category||"—"],["Size",p.size||"—"]].map(([k,v])=>`<dt>${k}</dt><dd>${v}</dd>`).join("");
-  $("#sheet").innerHTML=`<button class="close" data-close aria-label="Close"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button><div class="sheet-grid"><div class="sheet-img"><img id="m-img" referrerpolicy="no-referrer" alt="${p.name}"></div><div class="sheet-body"><div class="m-brand">${p.brand||"No brand"}</div><h2 class="m-name">${p.name}</h2><div class="m-price ${sold?'sold':''}">${money(p.price)}</div><div class="statusline"><span class="status-dot" style="background:${st[1]}"></span>${st[0]}</div><dl class="dl">${rows}</dl>${p.notes?`<div class="m-notes">${p.notes}</div>`:""}<div class="m-actions">${actions}</div></div></div>`;
+  $("#sheet").innerHTML=`<div class="sheet-bar"><span class="sheet-bar-t">${p.brand||"Item"}</span><button class="sheet-close-btn" data-close>Close ✕</button></div><button class="close" data-close aria-label="Close"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button><div class="sheet-grid"><div class="sheet-img"><img id="m-img" referrerpolicy="no-referrer" alt="${p.name}"></div><div class="sheet-body"><div class="m-brand">${p.brand||"No brand"}</div><h2 class="m-name">${p.name}</h2><div class="m-price ${sold?'sold':''}">${money(p.price)}</div><div class="statusline"><span class="status-dot" style="background:${st[1]}"></span>${st[0]}</div><dl class="dl">${rows}</dl>${p.notes?`<div class="m-notes">${p.notes}</div>`:""}<div class="m-actions">${actions}</div></div></div>`;
   const img=$("#m-img"); img.onerror=()=>{ img.onerror=null; img.src=placeholder(p); }; img.src=p.photo||placeholder(p);
   $("#modal").classList.add("open"); document.body.style.overflow="hidden";
-  const u=new URLSearchParams(location.search); u.set("id",p.id); safeURL("?"+u.toString());
+  const u=new URLSearchParams(location.search); u.set("id",p.id);
+  // push a history entry so the phone's Back button closes the product
+  try{ history.pushState({modal:1},"","?"+u.toString()); }catch(e){ safeURL("?"+u.toString()); }
 }
-function closeModal(){ $("#modal").classList.remove("open"); document.body.style.overflow=""; const u=new URLSearchParams(location.search); u.delete("id"); safeURL(u.toString()?"?"+u.toString():location.pathname); }
+function closeModal(fromPop){
+  if(!$("#modal").classList.contains("open")) return;
+  $("#modal").classList.remove("open"); document.body.style.overflow="";
+  const u=new URLSearchParams(location.search); u.delete("id");
+  // if we're closing via button/tap, roll back the history entry we added
+  if(!fromPop && history.state && history.state.modal){ try{ history.back(); return; }catch(e){} }
+  safeURL(u.toString()?"?"+u.toString():location.pathname);
+}
 window.copyItem=id=>{ const u=new URLSearchParams(location.search); u.set("id",id); copy(location.origin+location.pathname+"?"+u.toString(),"Item link copied"); };
 
 function copy(text,msg){ const done=()=>toast(msg); if(navigator.clipboard){ navigator.clipboard.writeText(text).then(done).catch(()=>fb()); } else fb(); function fb(){ const t=document.createElement("textarea"); t.value=text; document.body.appendChild(t); t.select(); try{document.execCommand("copy");}catch(e){} t.remove(); done(); } }
@@ -445,9 +465,11 @@ $("#btnShare").addEventListener("click",async()=>{
 $("#btnFilters").addEventListener("click",()=>$("#filterbar").classList.toggle("open"));
 $("#modal").addEventListener("click",e=>{ if(e.target.dataset.close!==undefined) closeModal(); });
 document.addEventListener("keydown",e=>{ if(e.key==="Escape"&&$("#modal").classList.contains("open")) closeModal(); });
+/* Android/phone back button closes the product instead of leaving the site */
+addEventListener("popstate",()=>{ if($("#modal").classList.contains("open")) closeModal(true); });
 
 /* One delegated click handler for all cards/rows (works for batches added later) */
-$("#results").addEventListener("click",e=>{ const el=e.target.closest("[data-id]"); if(el && el.tagName!=="IMG") openModal(el.dataset.id); });
+$("#results").addEventListener("click",e=>{ const el=e.target.closest("[data-id]"); if(!el) return; if(e.target.closest(".thumb, .rthumb")) return; openModal(el.dataset.id); });
 
 /* Infinite scroll: when the sentinel enters the viewport, paint the next batch */
 new IntersectionObserver(es=>{ if(es.some(x=>x.isIntersecting)) appendMore(); },{rootMargin:"600px"}).observe($("#sentinel"));
@@ -471,4 +493,3 @@ boot();
 </script>
 </body>
 </html>
- 
