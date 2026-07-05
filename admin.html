@@ -9,6 +9,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;450;500;600&display=swap" rel="stylesheet" />
+<!-- SheetJS: builds the downloadable Excel report client-side, no server needed -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 :root{
   --bg:#FAFAF7; --surface:#FFFFFF; --surface-2:#F4F3EF;
@@ -248,6 +250,7 @@ footer{margin:48px 0 36px; text-align:center; color:var(--muted); font-size:12px
       <span class="pub" id="pubState"><span class="pd"></span><span id="pubTxt">—</span></span>
       <button class="btn ghost small" id="btnReload" title="Discard local changes and reload the published file">Reload published</button>
       <button class="btn ghost small" id="btnDownload" title="Manual backup / manual publish">Download JSON</button>
+      <button class="btn ghost small" id="btnExcel" title="Download a full Excel report">Excel report</button>
       <button class="btn primary" id="btnPublish" title="Publish your changes to the live shop">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5m0 0-5 5m5-5 5 5"/><path d="M5 21h14"/></svg>
         Publish
@@ -335,6 +338,11 @@ footer{margin:48px 0 36px; text-align:center; color:var(--muted); font-size:12px
               <label class="lab" for="i-solddate">Date sold</label>
               <input class="in" id="i-solddate" type="date" />
               <div class="hint">Filled in automatically when you mark it Sold. Edit it if the sale happened on a different day.</div>
+            </div>
+            <div class="field-wrap" id="soldPriceWrap" style="display:none">
+              <label class="lab" for="i-soldprice">Sold for (€)</label>
+              <input class="in" id="i-soldprice" type="number" min="0" step="0.01" placeholder="e.g. 120" />
+              <div class="hint">If you negotiated a different price than listed, put the real amount here — the shop and your stats will use this one.</div>
             </div>
             <div class="field-wrap full">
               <label class="lab" for="i-vinted">Vinted link</label>
@@ -458,6 +466,9 @@ const SES_KEY = "bpm_admin_ok";  // remembers you're unlocked during this tab se
 const $=s=>document.querySelector(s), $$=s=>Array.from(document.querySelectorAll(s));
 const norm=s=>(s||"").toString().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim();
 const money=n=>ADMIN.currency+Number(n||0).toLocaleString("en-GB",{minimumFractionDigits:2,maximumFractionDigits:2});
+/* Effective price of a sold item: the negotiated sold price if you set one,
+   otherwise the original listed price. Used everywhere sales are totalled. */
+const soldValueOf=p=>(p.soldPrice!==undefined && p.soldPrice!==null && p.soldPrice!=="" && Number(p.soldPrice)>=0) ? Number(p.soldPrice) : Number(p.price||0);
 const COLORS={"black":"#1b1b1b","white":"#f7f7f5","grey":"#9ca3af","gray":"#9ca3af","navy":"#1f2a44","blue":"#3257a8","mid blue":"#3f6fb0","denim blue":"#4a6079","red":"#b3261e","burgundy":"#6e2436","pink":"#e6a4b4","green":"#3f6b4a","olive":"#6b6b3a","khaki":"#7c7b52","yellow":"#e3c04b","mustard":"#caa53a","orange":"#cc6b3f","brown":"#6b4f3a","camel":"#c19a6b","beige":"#d8cbb6","cream":"#efe7d6","purple":"#6b4e71","lilac":"#b3a0cf","gold":"#c4a35a","silver":"#c9c9cf"};
 const STATUS={available:["Available","var(--accent)"],reserved:["Reserved","var(--amber)"],sold:["Sold","var(--sold)"]};
 function normalizePhoto(url){ if(!url) return ""; const m=url.match(/\/file\/d\/([^/]+)/)||url.match(/[?&]id=([^&]+)/); if(url.includes("drive.google.com")&&m) return "https://drive.google.com/thumbnail?id="+m[1]+"&sz=w800"; return url; }
@@ -503,10 +514,12 @@ function renderMetrics(){
   const reserved=items.filter(p=>p.status==="reserved");
   const sold=items.filter(p=>p.status==="sold");
   const sum=a=>a.reduce((s,p)=>s+Number(p.price||0),0);
-  const availValue=sum(avail), soldValue=sum(sold), totalValue=sum(items);
+  const availValue=sum(avail), totalValue=sum(items);
+  const soldValue=sold.reduce((s,p)=>s+soldValueOf(p),0);
   const avgAvail = avail.length ? availValue/avail.length : 0;
   const avgSold  = sold.length ? soldValue/sold.length : 0;
   const soldPct = n ? Math.round(sold.length/n*100) : 0;
+  const negotiatedCount = sold.filter(p=>p.soldPrice!==undefined && p.soldPrice!=="" && Number(p.soldPrice)!==Number(p.price||0)).length;
 
   // ── top KPI cards ──
   const cards=[
@@ -540,6 +553,7 @@ function renderMetrics(){
   const cheapest=priced.slice().sort((a,b)=>a.price-b.price)[0];
   const noPhoto=items.filter(p=>!p.photo).length;
   const newTag=items.filter(p=>p.isNew).length;
+  const discountTotal = sold.reduce((s,p)=>s+Math.max(0,Number(p.price||0)-soldValueOf(p)),0);
   const facts=[
     ["Whole catalogue value", money(totalValue)],
     ["Distinct brands", new Set(items.map(p=>p.brand).filter(Boolean)).size],
@@ -547,7 +561,8 @@ function renderMetrics(){
     ["Most expensive", dearest?`${esc(dearest.name)} · ${money(dearest.price)}`:"—"],
     ["Cheapest", cheapest?`${esc(cheapest.name)} · ${money(cheapest.price)}`:"—"],
     ['Marked "new"', newTag],
-    ["Missing a photo", noPhoto]
+    ["Missing a photo", noPhoto],
+    ["Negotiated sales", negotiatedCount+(negotiatedCount?" · gave up "+money(discountTotal):"")]
   ];
 
   $("#dash").innerHTML =
@@ -559,8 +574,9 @@ function renderMetrics(){
        <div class="brandpick"><select class="in" id="brandPick"><option value="">Choose a brand…</option>${byBrand.map(([b])=>`<option value="${esc(b)}">${esc(b)}</option>`).join("")}</select></div>
        <div id="brandStats"></div>
      </div>`+
-    `<div class="dcard wide"><h3>Sales by month</h3>
+    `<div class="dcard wide"><h3>Sales over time</h3>
        <div class="mtools">
+         <div class="mseg" id="grainPick"><button data-g="month" class="active">By month</button><button data-g="year">By year</button></div>
          <select class="in" id="monthPick"></select>
          <div class="mseg" id="monthView"><button data-v="chart" class="active">Chart</button><button data-v="list">List</button></div>
        </div>
@@ -591,22 +607,28 @@ function renderBrandStats(brand){
   </div>`;
 }
 
-/* ── Sales explorer: pick "All months" or a specific month, and a
-   Chart / List view for each. Uses soldDate when present, falling back to
-   the listing date only for legacy sold items that predate this feature. */
-let monthSel="", monthView="chart";
-const monthKeyOf=p=>(p.soldDate||p.date||"").slice(0,7);
-const monthLabel=k=>{ const [y,m]=k.split("-"); return new Date(y,m-1,1).toLocaleDateString("en-GB",{month:"long",year:"numeric"}); };
-const monthShort=k=>{ const [y,m]=k.split("-"); return new Date(y,m-1,1).toLocaleDateString("en-GB",{month:"short",year:"2-digit"}); };
+/* ── Sales explorer: Month or Year granularity, "All periods" or a specific
+   one, and a Chart / List view for each. Uses soldDate when present, falling
+   back to the listing date only for legacy sold items that predate this
+   feature. Money figures use the negotiated sold price when you set one. */
+let periodGrain="month", periodSel="", monthView="chart";
+const periodKeyOf=p=>{ const d=(p.soldDate||p.date||""); if(!d) return ""; return periodGrain==="year" ? d.slice(0,4) : d.slice(0,7); };
+const periodLabel=k=>{ if(periodGrain==="year") return k; const [y,m]=k.split("-"); return new Date(y,m-1,1).toLocaleDateString("en-GB",{month:"long",year:"numeric"}); };
+const periodShort=k=>{ if(periodGrain==="year") return k; const [y,m]=k.split("-"); return new Date(y,m-1,1).toLocaleDateString("en-GB",{month:"short",year:"2-digit"}); };
+const periodNoun=()=>periodGrain==="year"?"year":"month";
 
 function setupMonthlyControls(){
-  const sold=items.filter(p=>p.status==="sold" && monthKeyOf(p));
-  const months=[...new Set(sold.map(monthKeyOf))].sort().reverse(); // newest first
+  $$("#grainPick button").forEach(b=>{
+    b.classList.toggle("active", b.dataset.g===periodGrain);
+    b.onclick=()=>{ periodGrain=b.dataset.g; periodSel=""; $$("#grainPick button").forEach(x=>x.classList.toggle("active",x===b)); setupMonthlyControls(); };
+  });
+  const sold=items.filter(p=>p.status==="sold" && periodKeyOf(p));
+  const periods=[...new Set(sold.map(periodKeyOf))].sort().reverse(); // newest first
   const pick=$("#monthPick");
-  pick.innerHTML = `<option value="">All months (overview)</option>` + months.map(k=>`<option value="${k}">${monthLabel(k)}</option>`).join("");
-  pick.value = months.includes(monthSel) ? monthSel : "";
-  monthSel = pick.value;
-  pick.onchange=()=>{ monthSel=pick.value; renderMonthlySection(); };
+  pick.innerHTML = `<option value="">All ${periodNoun()}s (overview)</option>` + periods.map(k=>`<option value="${k}">${periodLabel(k)}</option>`).join("");
+  pick.value = periods.includes(periodSel) ? periodSel : "";
+  periodSel = pick.value;
+  pick.onchange=()=>{ periodSel=pick.value; renderMonthlySection(); };
   $$("#monthView button").forEach(b=>{
     b.classList.toggle("active", b.dataset.v===monthView);
     b.onclick=()=>{ monthView=b.dataset.v; $$("#monthView button").forEach(x=>x.classList.toggle("active",x===b)); renderMonthlySection(); };
@@ -614,60 +636,64 @@ function setupMonthlyControls(){
   renderMonthlySection();
 }
 
+function priceCell(p){
+  const eff=soldValueOf(p); const listed=Number(p.price||0);
+  return eff!==listed ? `${money(eff)} <span style="color:var(--muted); text-decoration:line-through; font-weight:400; font-size:11px">${money(listed)}</span>` : money(eff);
+}
+
 function renderMonthlySection(){
   const sold=items.filter(p=>p.status==="sold");
   if(!sold.length){ $("#monthDetail").innerHTML=""; $("#monthly").innerHTML=`<div class="dnote">No sales yet — mark an item as Sold to see it here</div>`; return; }
-  if(!monthSel){
-    // "All months": Chart = the overview bars; List = every sold item, newest first
+  if(!periodSel){
     if(monthView==="chart"){ $("#monthDetail").innerHTML=""; renderMonthlyOverview(sold); }
     else{ $("#monthly").innerHTML=""; renderAllSoldList(sold); }
     return;
   }
-  // A specific month picked: Chart = mini breakdown + totals; List = itemized sales
   $("#monthly").innerHTML="";
-  const mine=sold.filter(p=>monthKeyOf(p)===monthSel);
-  const val=a=>a.reduce((s,p)=>s+Number(p.price||0),0);
+  const mine=sold.filter(p=>periodKeyOf(p)===periodSel);
+  const val=a=>a.reduce((s,p)=>s+soldValueOf(p),0);
   const avg=mine.length?val(mine)/mine.length:0;
   const summary=`<div class="msummary">
-    <div class="bstat"><div class="v">${mine.length}</div><div class="k">Sold this month</div></div>
+    <div class="bstat"><div class="v">${mine.length}</div><div class="k">Sold this ${periodNoun()}</div></div>
     <div class="bstat"><div class="v">${money(val(mine))}</div><div class="k">Revenue</div></div>
     <div class="bstat"><div class="v">${money(avg)}</div><div class="k">Avg. price</div></div>
   </div>`;
   if(monthView==="chart"){
-    const byCat={}; mine.forEach(p=>{ const k=(p.category||"—").trim()||"—"; if(!byCat[k]) byCat[k]={n:0,val:0}; byCat[k].n++; byCat[k].val+=Number(p.price||0); });
+    const byCat={}; mine.forEach(p=>{ const k=(p.category||"—").trim()||"—"; if(!byCat[k]) byCat[k]={n:0,val:0}; byCat[k].n++; byCat[k].val+=soldValueOf(p); });
     const entries=Object.entries(byCat).sort((a,b)=>b[1].val-a[1].val);
     const peak=Math.max(1,...entries.map(([,v])=>v.val));
     const bars=entries.map(([k,v])=>`<div class="bar"><div class="lab"><b>${esc(k)}</b><span class="c">${v.n} · ${money(v.val)}</span></div><div class="track"><div class="fill" style="width:${Math.round(v.val/peak*100)}%"></div></div></div>`).join("")||`<div class="dnote">No data</div>`;
     $("#monthDetail").innerHTML = summary + `<div style="margin-top:6px">${bars}</div>`;
   } else {
     const rows=mine.slice().sort((a,b)=>(b.soldDate||b.date||"").localeCompare(a.soldDate||a.date||"")).map(p=>
-      `<tr><td>${esc(p.name||"—")}</td><td>${esc(p.brand||"—")}</td><td>${esc((p.soldDate||p.date||"").slice(0,10))}</td><td class="p">${money(p.price)}</td></tr>`).join("");
+      `<tr><td>${esc(p.name||"—")}</td><td>${esc(p.brand||"—")}</td><td>${esc((p.soldDate||p.date||"").slice(0,10))}</td><td class="p">${priceCell(p)}</td></tr>`).join("");
     $("#monthDetail").innerHTML = summary + `<table class="mtable"><thead><tr><th>Item</th><th>Brand</th><th>Sold on</th><th style="text-align:right">Price</th></tr></thead><tbody>${rows}</tbody></table>`;
   }
 }
 
 function renderMonthlyOverview(sold){
   const box=$("#monthly");
-  const byMonth={};
-  sold.forEach(p=>{ const k=monthKeyOf(p); if(!k) return; if(!byMonth[k]) byMonth[k]={n:0,val:0}; byMonth[k].n++; byMonth[k].val+=Number(p.price||0); });
-  const keys=Object.keys(byMonth).sort();
+  const byPeriod={};
+  sold.forEach(p=>{ const k=periodKeyOf(p); if(!k) return; if(!byPeriod[k]) byPeriod[k]={n:0,val:0}; byPeriod[k].n++; byPeriod[k].val+=soldValueOf(p); });
+  const keys=Object.keys(byPeriod).sort();
   if(!keys.length){ box.innerHTML=`<div class="dnote">Sold items don't have a sale date yet</div>`; return; }
-  const peak=Math.max(1,...keys.map(k=>byMonth[k].val));
-  const rows=keys.slice(-12).map((k,i,arr)=>{
-    const cur=byMonth[k], prevKey=arr[i-1]; const prev=prevKey?byMonth[prevKey]:null;
+  const peak=Math.max(1,...keys.map(k=>byPeriod[k].val));
+  const showKeys = periodGrain==="year" ? keys : keys.slice(-12);
+  const rows=showKeys.map((k,i,arr)=>{
+    const cur=byPeriod[k], prevKey=arr[i-1]; const prev=prevKey?byPeriod[prevKey]:null;
     let trend="";
     if(prev){ const diff=cur.val-prev.val; const pct=prev.val?Math.round(diff/prev.val*100):0;
       trend = diff>=0 ? `<span class="trend up">▲ ${pct}%</span>` : `<span class="trend down">▼ ${Math.abs(pct)}%</span>`; }
-    return `<div class="monthrow"><span class="m">${monthShort(k)}</span><div class="track"><div class="fill" style="width:${Math.round(cur.val/peak*100)}%"></div></div><span class="n">${cur.n}</span><span class="val">${money(cur.val)}</span>${trend?`<div style="grid-column:1/-1; text-align:right; margin-top:-2px">${trend}</div>`:""}</div>`;
+    return `<div class="monthrow"><span class="m">${periodShort(k)}</span><div class="track"><div class="fill" style="width:${Math.round(cur.val/peak*100)}%"></div></div><span class="n">${cur.n}</span><span class="val">${money(cur.val)}</span>${trend?`<div style="grid-column:1/-1; text-align:right; margin-top:-2px">${trend}</div>`:""}</div>`;
   }).join("");
-  const totalN=sold.length, totalVal=sold.reduce((s,p)=>s+Number(p.price||0),0);
-  const noDate=sold.filter(p=>!monthKeyOf(p)).length;
+  const totalN=sold.length, totalVal=sold.reduce((s,p)=>s+soldValueOf(p),0);
+  const noDate=sold.filter(p=>!periodKeyOf(p)).length;
   box.innerHTML = rows + `<div class="kv" style="margin-top:8px; border-top:1px solid var(--line); padding-top:10px"><span class="k">All-time sold</span><span class="v">${totalN} items · ${money(totalVal)}</span></div>` + (noDate?`<div class="dnote">${noDate} sold item(s) have no date and aren't shown above</div>`:"");
 }
 
 function renderAllSoldList(sold){
   const withDate=sold.slice().sort((a,b)=>(b.soldDate||b.date||"").localeCompare(a.soldDate||a.date||""));
-  const rows=withDate.map(p=>`<tr><td>${esc(p.name||"—")}</td><td>${esc(p.brand||"—")}</td><td>${esc((p.soldDate||p.date||"").slice(0,10)||"—")}</td><td class="p">${money(p.price)}</td></tr>`).join("");
+  const rows=withDate.map(p=>`<tr><td>${esc(p.name||"—")}</td><td>${esc(p.brand||"—")}</td><td>${esc((p.soldDate||p.date||"").slice(0,10)||"—")}</td><td class="p">${priceCell(p)}</td></tr>`).join("");
   $("#monthDetail").innerHTML = `<table class="mtable"><thead><tr><th>Item</th><th>Brand</th><th>Sold on</th><th style="text-align:right">Price</th></tr></thead><tbody>${rows}</tbody></table>`;
 }
 
@@ -692,7 +718,7 @@ function renderTable(){
       <td><img class="tthumb" loading="lazy" referrerpolicy="no-referrer" src="${img}" onerror="this.src='${placeholder(p.color,p.category)}'" alt=""></td>
       <td><div class="tname">${esc(p.name||"(no name)")}</div><div class="tbrand">${esc(p.brand||"")}</div></td>
       <td class="colhide">${esc(p.size||"–")}</td>
-      <td class="colhide">${money(p.price)}</td>
+      <td class="colhide">${p.status==="sold"?priceCell(p):money(p.price)}</td>
       <td>
         <select class="statussel" data-idx="${idx}" onchange="quickStatus(${idx}, this.value)">
           <option value="available" ${p.status==="available"?"selected":""}>● Available</option>
@@ -748,30 +774,33 @@ function readForm(){
     notes:$("#i-notes").value.trim(),
     date:$("#i-date").value||"",
     soldDate:$("#i-status").value==="sold" ? ($("#i-solddate").value||new Date().toISOString().slice(0,10)) : "",
+    soldPrice:$("#i-status").value==="sold" && $("#i-soldprice").value!=="" ? Number($("#i-soldprice").value) : "",
     isNew:$("#i-new").checked
   };
 }
-function toggleSoldDate(){
+function toggleSoldFields(){
   const isSold=$("#i-status").value==="sold";
   $("#soldDateWrap").style.display=isSold?"":"none";
+  $("#soldPriceWrap").style.display=isSold?"":"none";
   if(isSold && !$("#i-solddate").value) $("#i-solddate").value=new Date().toISOString().slice(0,10);
+  if(isSold && $("#i-soldprice").value==="" && $("#i-price").value!=="") $("#i-soldprice").value=$("#i-price").value;
 }
 function fillForm(p){
   $("#i-photo").value=p.photo||""; $("#i-name").value=p.name||""; $("#i-brand").value=p.brand||"";
   $("#i-size").value=p.size||""; $("#i-category").value=p.category||""; $("#i-color").value=p.color||"";
   $("#i-condition").value=p.condition||""; $("#i-price").value=(p.price??""); $("#i-status").value=p.status||"available";
   $("#i-vinted").value=p.vintedLink||""; $("#i-notes").value=p.notes||""; $("#i-date").value=p.date||""; $("#i-new").checked=!!p.isNew;
-  $("#i-solddate").value=p.soldDate||"";
-  toggleSoldDate();
+  $("#i-solddate").value=p.soldDate||""; $("#i-soldprice").value=(p.soldPrice??"");
+  toggleSoldFields();
   renderPreview();
 }
 function resetForm(keepSticky=false){
   const keep = keepSticky ? { brand:$("#i-brand").value, category:$("#i-category").value, condition:$("#i-condition").value, date:$("#i-date").value, status:$("#i-status").value } : null;
-  ["#i-photo","#i-name","#i-brand","#i-size","#i-category","#i-color","#i-condition","#i-price","#i-vinted","#i-notes","#i-solddate"].forEach(s=>$(s).value="");
+  ["#i-photo","#i-name","#i-brand","#i-size","#i-category","#i-color","#i-condition","#i-price","#i-vinted","#i-notes","#i-solddate","#i-soldprice"].forEach(s=>$(s).value="");
   $("#i-status").value="available"; $("#i-new").checked=false;
   $("#i-date").value=new Date().toISOString().slice(0,10);
   if(keep){ $("#i-brand").value=keep.brand; $("#i-category").value=keep.category; $("#i-condition").value=keep.condition; if(keep.date) $("#i-date").value=keep.date; $("#i-status").value=keep.status; }
-  toggleSoldDate();
+  toggleSoldFields();
   editIndex=-1; $("#formTitle").textContent="Add item"; $("#btnSave").textContent="Add item"; $("#btnCancel").style.display="none";
   syncChips(); renderPreview();
 }
@@ -803,12 +832,21 @@ function deleteItem(idx){
   items.splice(idx,1); markDirty(true); saveLocal(); refreshAll(); if(editIndex===idx) resetForm();
   toastAction("Item deleted.","Undo",()=>{ if(!lastDeleted) return; items.splice(Math.min(lastDeleted.idx,items.length),0,lastDeleted.item); lastDeleted=null; markDirty(true); saveLocal(); refreshAll(); toast("Restored"); });
 }
-function quickStatus(idx,val){ items[idx].status=val; if(val==="sold" && !items[idx].soldDate) items[idx].soldDate=new Date().toISOString().slice(0,10); markDirty(true); saveLocal(); renderMetrics(); renderTable(); }
+function quickStatus(idx,val){
+  items[idx].status=val;
+  if(val==="sold"){
+    if(!items[idx].soldDate) items[idx].soldDate=new Date().toISOString().slice(0,10);
+    const listed=Number(items[idx].price||0);
+    const ans=prompt("Sold for how much? (listed at "+money(listed)+" — leave blank if that's the real price)","");
+    if(ans!==null && ans.trim()!==""){ const n=Number(ans); if(!isNaN(n) && n>=0) items[idx].soldPrice=n; }
+  }
+  markDirty(true); saveLocal(); renderMetrics(); renderTable();
+}
 function dupItem(idx){ const copy={...items[idx], name:(items[idx].name||"Item")+" (copy)"}; items.splice(idx+1,0,copy); markDirty(true); saveLocal(); refreshAll(); toast("Item duplicated — edit it"); editItem(idx+1); }
 window.editItem=editItem; window.deleteItem=deleteItem; window.quickStatus=quickStatus; window.dupItem=dupItem;
 
 /* ── CSV helpers ──────────────────────────────────────────────────────── */
-const CSV_COLS=["photo","name","brand","size","category","color","condition","price","status","vintedLink","notes","date","soldDate","isNew"];
+const CSV_COLS=["photo","name","brand","size","category","color","condition","price","status","vintedLink","notes","date","soldDate","soldPrice","isNew"];
 function csvCell(v){ v=(v==null?"":String(v)); return /[",\n]/.test(v) ? '"'+v.replace(/"/g,'""')+'"' : v; }
 function toCSV(list){
   const head=CSV_COLS.join(",");
@@ -831,6 +869,7 @@ function parseCSV(text){
       photo:o.photo||"", name:o.name||"", brand:o.brand||"", size:o.size||"", category:o.category||"",
       color:o.color||"", condition:o.condition||"", price:o.price?Number(o.price):0, status:(o.status||"available").toLowerCase(),
       vintedLink:o.vintedLink||o.vinted||"", notes:o.notes||"", date:o.date||"", soldDate:o.soldDate||"",
+      soldPrice:o.soldPrice?Number(o.soldPrice):"",
       isNew:/^(true|1|yes|si|sí)$/i.test(o.isNew||"")
     };
   });
@@ -859,6 +898,65 @@ function handleImport(file){
 }
 
 /* ── download / publish ───────────────────────────────────────────────── */
+
+/* Builds a multi-sheet Excel report entirely in the browser (SheetJS).
+   Money figures for sold items use the negotiated sold price when set. */
+function downloadExcelReport(){
+  if(typeof XLSX==="undefined"){ toast("Excel library still loading — try again in a second"); return; }
+  const wb=XLSX.utils.book_new();
+  const avail=items.filter(p=>p.status==="available");
+  const reserved=items.filter(p=>p.status==="reserved");
+  const sold=items.filter(p=>p.status==="sold");
+  const availValue=avail.reduce((s,p)=>s+Number(p.price||0),0);
+  const soldValue=sold.reduce((s,p)=>s+soldValueOf(p),0);
+  const discountTotal=sold.reduce((s,p)=>s+Math.max(0,Number(p.price||0)-soldValueOf(p)),0);
+
+  // Sheet 1 — Summary
+  const summaryRows=[
+    ["BPM closet — report", new Date().toLocaleDateString("en-GB")],
+    [],
+    ["Total items", items.length],
+    ["Available", avail.length],
+    ["Reserved", reserved.length],
+    ["Sold", sold.length],
+    ["Available value (€)", Number(availValue.toFixed(2))],
+    ["Sold revenue (€)", Number(soldValue.toFixed(2))],
+    ["Total discount given on sales (€)", Number(discountTotal.toFixed(2))],
+    ["Distinct brands", new Set(items.map(p=>p.brand).filter(Boolean)).size],
+    ["Distinct categories", new Set(items.map(p=>p.category).filter(Boolean)).size],
+  ];
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(summaryRows), "Summary");
+
+  // Sheet 2 — Sales by month
+  const byMonth={};
+  sold.forEach(p=>{ const k=(p.soldDate||p.date||"").slice(0,7); if(!k) return; if(!byMonth[k]) byMonth[k]={n:0,val:0}; byMonth[k].n++; byMonth[k].val+=soldValueOf(p); });
+  const monthRows=[["Month","Items sold","Revenue (€)"]].concat(Object.keys(byMonth).sort().map(k=>[k, byMonth[k].n, Number(byMonth[k].val.toFixed(2))]));
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(monthRows), "Sales by month");
+
+  // Sheet 3 — Sales by year
+  const byYear={};
+  sold.forEach(p=>{ const k=(p.soldDate||p.date||"").slice(0,4); if(!k) return; if(!byYear[k]) byYear[k]={n:0,val:0}; byYear[k].n++; byYear[k].val+=soldValueOf(p); });
+  const yearRows=[["Year","Items sold","Revenue (€)"]].concat(Object.keys(byYear).sort().map(k=>[k, byYear[k].n, Number(byYear[k].val.toFixed(2))]));
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(yearRows), "Sales by year");
+
+  // Sheet 4 — Every sold item, itemised
+  const soldRows=[["Item","Brand","Category","Size","Listed price (€)","Sold price (€)","Sold on"]].concat(
+    sold.slice().sort((a,b)=>(b.soldDate||b.date||"").localeCompare(a.soldDate||a.date||"")).map(p=>[
+      p.name||"", p.brand||"", p.category||"", p.size||"",
+      Number(p.price||0), Number(soldValueOf(p)), p.soldDate||p.date||""
+    ]));
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(soldRows), "Sold items");
+
+  // Sheet 5 — Full current inventory
+  const invRows=[["Item","Brand","Category","Size","Color","Condition","Price (€)","Status","Listed on","Sold on","Sold price (€)","Vinted link","Notes"]].concat(
+    items.map(p=>[p.name||"", p.brand||"", p.category||"", p.size||"", p.color||"", p.condition||"", Number(p.price||0), p.status||"", p.date||"", p.soldDate||"", p.soldPrice!==undefined&&p.soldPrice!==""?Number(p.soldPrice):"", p.vintedLink||"", p.notes||""]));
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(invRows), "Full inventory");
+
+  const stamp=new Date().toISOString().slice(0,10);
+  XLSX.writeFile(wb, `bpm-closet-report-${stamp}.xlsx`);
+  toast("Excel report downloaded");
+}
+
 
 /* GitHub publishing: the panel commits items.json to your repo using a
    fine-grained personal token (stored ONLY in this browser). */
@@ -978,6 +1076,7 @@ $("#pass").addEventListener("keydown",e=>{ if(e.key==="Enter") tryEnter(); });
 $("#btnSave").addEventListener("click",saveItem);
 $("#btnCancel").addEventListener("click",resetForm);
 $("#btnDownload").addEventListener("click",downloadJSON);
+$("#btnExcel").addEventListener("click",downloadExcelReport);
 $("#btnReload").addEventListener("click",reloadPublished);
 $("#btnLock").addEventListener("click",lock);
 $("#btnPublish").addEventListener("click",publish);
@@ -1032,7 +1131,7 @@ $("#importFile").addEventListener("change",e=>{ const f=e.target.files[0]; if(f)
 $("#btnExportCsv").addEventListener("click",exportCSV);
 $("#btnTemplate").addEventListener("click",downloadTemplate);
 ["#i-photo","#i-name","#i-brand","#i-size","#i-category","#i-color","#i-price","#i-status","#i-new"].forEach(s=>$(s).addEventListener("input",renderPreview));
-$("#i-status").addEventListener("change",()=>{ toggleSoldDate(); renderPreview(); });
+$("#i-status").addEventListener("change",()=>{ toggleSoldFields(); renderPreview(); });
 
 /* If already unlocked in this tab session, skip the gate */
 (function(){ let ok=false; try{ ok=sessionStorage.getItem(SES_KEY)==="1"; }catch(e){} if(ok) unlock(); else $("#pass").focus(); })();
