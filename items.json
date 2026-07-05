@@ -8,11 +8,11 @@
     "color": "Black",
     "condition": "Good condition",
     "price": 120,
-    "status": "available",
+    "status": "sold",
     "vintedLink": "",
     "notes": "",
     "date": "2026-07-05",
-    "soldDate": "",
+    "soldDate": "2026-07-05",
     "isNew": false
   },
   {
