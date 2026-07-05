@@ -76,6 +76,26 @@ section.block{margin-top:26px}
 .metric .v{font-family:var(--serif); font-size:25px; font-weight:500; letter-spacing:-.02em; line-height:1.05}
 .metric .k{font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.07em; margin-top:6px; font-weight:600}
 .metric.accent .v{color:var(--accent)}
+.metric .sub{font-size:10.5px; color:var(--muted); margin-top:3px; font-weight:500}
+
+/* dashboard extras */
+.dash{display:grid; grid-template-columns:1fr; gap:14px; margin-top:14px}
+@media(min-width:820px){.dash{grid-template-columns:1fr 1fr}}
+.dcard{background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:16px 18px}
+.dcard h3{font-family:var(--sans); font-size:11px; text-transform:uppercase; letter-spacing:.07em; color:var(--muted); font-weight:600; margin:0 0 12px}
+.bar{margin-bottom:9px}
+.bar:last-child{margin-bottom:0}
+.bar .lab{display:flex; justify-content:space-between; align-items:baseline; font-size:12.5px; margin-bottom:4px}
+.bar .lab b{font-weight:600}
+.bar .lab .c{color:var(--muted); font-variant-numeric:tabular-nums; font-size:11.5px}
+.bar .track{height:7px; background:var(--surface-2); border-radius:99px; overflow:hidden}
+.bar .fill{height:100%; background:var(--accent); border-radius:99px}
+.bar .fill.b2{background:#7c93c4}
+.dnote{font-size:12px; color:var(--muted); text-align:center; padding:14px 0}
+.kv{display:flex; justify-content:space-between; padding:7px 0; border-bottom:1px solid var(--line); font-size:13px}
+.kv:last-child{border-bottom:none}
+.kv .k{color:var(--muted)}
+.kv .v{font-weight:600; font-variant-numeric:tabular-nums}
 
 /* Form */
 .panel{background:var(--surface); border:1px solid var(--line); border-radius:16px; padding:20px; display:grid; grid-template-columns:1fr; gap:22px}
@@ -212,6 +232,7 @@ footer{margin:48px 0 36px; text-align:center; color:var(--muted); font-size:12px
     <section class="block">
       <div class="h">Overview <span class="pill" id="updated"></span></div>
       <div class="metrics" id="metrics"></div>
+      <div class="dash" id="dash"></div>
     </section>
 
     <!-- Add / edit -->
@@ -436,20 +457,63 @@ async function loadData(){
 
 /* ── render: metrics ──────────────────────────────────────────────────── */
 function renderMetrics(){
+  const n=items.length;
   const avail=items.filter(p=>p.status==="available");
   const reserved=items.filter(p=>p.status==="reserved");
   const sold=items.filter(p=>p.status==="sold");
-  const availValue=avail.reduce((s,p)=>s+Number(p.price||0),0);
-  const soldValue=sold.reduce((s,p)=>s+Number(p.price||0),0);
+  const sum=a=>a.reduce((s,p)=>s+Number(p.price||0),0);
+  const availValue=sum(avail), soldValue=sum(sold), totalValue=sum(items);
+  const avgAvail = avail.length ? availValue/avail.length : 0;
+  const avgSold  = sold.length ? soldValue/sold.length : 0;
+  const soldPct = n ? Math.round(sold.length/n*100) : 0;
+
+  // ── top KPI cards ──
   const cards=[
-    ["Total items", items.length, ""],
-    ["Available", avail.length, "accent"],
+    ["Total items", n, ""],
+    ["Available", avail.length, "accent", avail.length?money(availValue)+" value":""],
     ["Reserved", reserved.length, ""],
-    ["Sold", sold.length, ""],
-    ["Available value", money(availValue), ""],
-    ["Sold value", money(soldValue), ""]
+    ["Sold", sold.length, "", soldPct+"% of stock"],
+    ["Avg. price (available)", money(avgAvail), ""],
+    ["Sold value", money(soldValue), "", sold.length?"avg "+money(avgSold):""]
   ];
-  $("#metrics").innerHTML = cards.map(([k,v,c])=>`<div class="metric ${c}"><div class="v">${v}</div><div class="k">${k}</div></div>`).join("");
+  $("#metrics").innerHTML = cards.map(([k,v,c,sub])=>`<div class="metric ${c||""}"><div class="v">${v}</div><div class="k">${k}</div>${sub?`<div class="sub">${sub}</div>`:""}</div>`).join("");
+
+  // ── helper: grouped breakdown with bars ──
+  function group(field){
+    const m={}; items.forEach(p=>{ const k=(p[field]||"—").trim()||"—"; if(!m[k]) m[k]={n:0,val:0,avail:0}; m[k].n++; m[k].val+=Number(p.price||0); if(p.status==="available") m[k].avail++; });
+    return Object.entries(m).sort((a,b)=>b[1].n-a[1].n);
+  }
+  function bars(entries, max, cls){
+    const top=entries.slice(0,8);
+    const peak=Math.max(1,...top.map(([,v])=>v.n));
+    let html=top.map(([k,v])=>`<div class="bar"><div class="lab"><b>${esc(k)}</b><span class="c">${v.n} · ${money(v.val)}</span></div><div class="track"><div class="fill ${cls||''}" style="width:${Math.round(v.n/peak*100)}%"></div></div></div>`).join("");
+    if(entries.length>top.length) html+=`<div class="dnote">+ ${entries.length-top.length} more</div>`;
+    return html || `<div class="dnote">No data yet</div>`;
+  }
+
+  const byCat=group("category"), byBrand=group("brand"), bySize=group("size");
+
+  // ── key facts card ──
+  const priced=items.filter(p=>Number(p.price)>0);
+  const dearest=priced.slice().sort((a,b)=>b.price-a.price)[0];
+  const cheapest=priced.slice().sort((a,b)=>a.price-b.price)[0];
+  const noPhoto=items.filter(p=>!p.photo).length;
+  const newTag=items.filter(p=>p.isNew).length;
+  const facts=[
+    ["Whole catalogue value", money(totalValue)],
+    ["Distinct brands", new Set(items.map(p=>p.brand).filter(Boolean)).size],
+    ["Distinct categories", new Set(items.map(p=>p.category).filter(Boolean)).size],
+    ["Most expensive", dearest?`${esc(dearest.name)} · ${money(dearest.price)}`:"—"],
+    ["Cheapest", cheapest?`${esc(cheapest.name)} · ${money(cheapest.price)}`:"—"],
+    ['Marked "new"', newTag],
+    ["Missing a photo", noPhoto]
+  ];
+
+  $("#dash").innerHTML =
+    `<div class="dcard"><h3>By category</h3>${bars(byCat)}</div>`+
+    `<div class="dcard"><h3>By brand</h3>${bars(byBrand,0,"b2")}</div>`+
+    `<div class="dcard"><h3>By size</h3>${bars(bySize)}</div>`+
+    `<div class="dcard"><h3>Key facts</h3>${facts.map(([k,v])=>`<div class="kv"><span class="k">${k}</span><span class="v">${v}</span></div>`).join("")}</div>`;
 }
 
 /* ── render: datalists ────────────────────────────────────────────────── */
@@ -556,12 +620,19 @@ function saveItem(){
     const dup=items.find(p=>norm(p.name)===norm(data.name));
     if(dup && !confirm(`You already have an item called “${dup.name}”. Add it anyway?`)) return;
   }
-  if(editIndex>=0){ items[editIndex]=data; toast("Item updated"); }
+  if(editIndex>=0){ items[editIndex]=data; toast("Item updated — press Publish to make it live"); }
   else { items.unshift(data); toast("Item added — form kept your brand & category"); }
   markDirty(true); saveLocal(); refreshAll(); resetForm(true);
   $("#i-photo").focus();
 }
-function editItem(idx){ editIndex=idx; fillForm(items[idx]); $("#formTitle").textContent="Edit item"; $("#btnSave").textContent="Update item"; $("#btnCancel").style.display=""; document.querySelector(".panel").scrollIntoView({behavior:"smooth",block:"center"}); }
+function editItem(idx){
+  if(editIndex>=0 && editIndex!==idx){ /* switching item mid-edit */ }
+  editIndex=idx; fillForm(items[idx]);
+  $("#formTitle").textContent="Edit item · remember to press Update, then Publish";
+  $("#btnSave").textContent="Update item"; $("#btnCancel").style.display="";
+  syncChips(); renderPreview();
+  document.querySelector(".panel").scrollIntoView({behavior:"smooth",block:"center"});
+}
 function deleteItem(idx){
   if(!confirm(`Delete “${items[idx].name||"this item"}”?`)) return;
   lastDeleted={item:items[idx], idx};
