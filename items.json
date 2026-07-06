@@ -12,8 +12,7 @@
     "vintedLink": "",
     "notes": "",
     "date": "2026-07-05",
-    "soldDate": "2026-07-03",
-    "soldPrice": 120,
+    "soldDate": "2026-07-05",
     "isNew": false
   },
   {
@@ -107,7 +106,7 @@
     "isNew": false
   },
   {
-    "photo": "",
+    "photo": "https://images1.vinted.net/t/01_018f0_QvvLHnDuCky3k33exk4ZBusq/f800/1775926534.webp?s=f98954425d8317277315fd178c0a6b0f05479c7c",
     "name": "Miu Miu Heavy flannel shirt blue striped size 38",
     "brand": "Miu Miu",
     "size": "38",
@@ -119,6 +118,8 @@
     "vintedLink": "",
     "notes": "",
     "date": "2026-07-02",
+    "soldDate": "",
+    "soldPrice": "",
     "isNew": false
   },
   {
