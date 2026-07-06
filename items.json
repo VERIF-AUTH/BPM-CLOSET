@@ -1,5 +1,39 @@
 [
   {
+    "photo": "https://images1.vinted.net/t/05_0222a_CwWfNKQd5cXWXeQuRNjYrqVx/f800/1782835750.webp?s=9ba5f45bd658d9160625de99270ffe63ea862102",
+    "name": "Vintage Puma Y2K Spiked Punk Leather Backpack",
+    "brand": "Puma",
+    "size": "One size",
+    "category": "Backpack",
+    "color": "Black",
+    "condition": "Good condition",
+    "price": 70,
+    "status": "sold",
+    "vintedLink": "",
+    "notes": "",
+    "date": "2026-03-03",
+    "soldDate": "2026-07-02",
+    "soldPrice": 70,
+    "isNew": false
+  },
+  {
+    "photo": "https://images1.vinted.net/t/05_021b8_GF3rKm3SM9fCmT81AE4FfCjf/f800/1768811761.webp?s=99a17e616a3950bdca08f552e7594fdf6454bc08",
+    "name": "On Running Cloudsurfer All Black Sneakers Talla 45 EU (US 11) CloudTec Triple Black",
+    "brand": "On cloud",
+    "size": "45",
+    "category": "SNEAKERS",
+    "color": "Black",
+    "condition": "Good condition",
+    "price": 75,
+    "status": "sold",
+    "vintedLink": "",
+    "notes": "",
+    "date": "2026-03-03",
+    "soldDate": "2026-07-06",
+    "soldPrice": 75,
+    "isNew": false
+  },
+  {
     "photo": "https://images1.vinted.net/t/05_012a2_erHCKzjZVL2CthBA3S6AY1yV/f800/1779293833.webp?s=b573e355be7947b7e73ca35436477b7006ae7641",
     "name": "Kiko Kostadinov x new era japan exclusive",
     "brand": "Kiko Kostadinov",
@@ -12,7 +46,8 @@
     "vintedLink": "",
     "notes": "",
     "date": "2026-07-05",
-    "soldDate": "2026-07-05",
+    "soldDate": "2026-07-03",
+    "soldPrice": 120,
     "isNew": false
   },
   {
@@ -106,7 +141,7 @@
     "isNew": false
   },
   {
-    "photo": "https://images1.vinted.net/t/01_018f0_QvvLHnDuCky3k33exk4ZBusq/f800/1775926534.webp?s=f98954425d8317277315fd178c0a6b0f05479c7c",
+    "photo": "",
     "name": "Miu Miu Heavy flannel shirt blue striped size 38",
     "brand": "Miu Miu",
     "size": "38",
@@ -118,8 +153,6 @@
     "vintedLink": "",
     "notes": "",
     "date": "2026-07-02",
-    "soldDate": "",
-    "soldPrice": "",
     "isNew": false
   },
   {
