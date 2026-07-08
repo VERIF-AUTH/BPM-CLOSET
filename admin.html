@@ -11,6 +11,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;450;500;600&display=swap" rel="stylesheet" />
 <!-- SheetJS: builds the downloadable Excel report client-side, no server needed -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<!-- Chart.js: draws the dashboard graphs -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
 <style>
 :root{
   --bg:#FAFAF7; --surface:#FFFFFF; --surface-2:#F4F3EF;
@@ -46,6 +48,32 @@ a{color:var(--accent)}
 
 /* Topbar */
 header.top{position:sticky; top:0; z-index:30; background:color-mix(in srgb,var(--bg) 90%,transparent); backdrop-filter:blur(10px); border-bottom:1px solid var(--line)}
+
+/* tab bar */
+.tabbar{position:sticky; top:62px; z-index:29; background:var(--bg); border-bottom:1px solid var(--line)}
+.tabbar-in{display:flex; gap:4px; overflow-x:auto; scrollbar-width:none; padding-top:2px}
+.tabbar-in::-webkit-scrollbar{display:none}
+.tabbtn{flex:none; display:inline-flex; align-items:center; gap:8px; border:none; background:transparent; color:var(--muted); font-size:13.5px; font-weight:600; padding:12px 16px 11px; border-bottom:2.5px solid transparent; white-space:nowrap}
+.tabbtn svg{width:17px; height:17px}
+.tabbtn:hover{color:var(--ink)}
+.tabbtn.active{color:var(--accent); border-bottom-color:var(--accent)}
+.tabpanel{display:none}
+.tabpanel.active{display:block}
+
+/* sell tab */
+.sellcard{display:flex; gap:14px; align-items:center; background:var(--surface-2); border-radius:12px; padding:12px 14px}
+.sellcard img{width:52px; height:64px; object-fit:cover; border-radius:8px; border:1px solid var(--line); flex:none}
+.sellcard .sn{font-weight:600; font-size:14.5px}
+.sellcard .sb{font-size:12px; color:var(--muted); margin-top:2px}
+.sellcard .sp{margin-left:auto; font-weight:600; font-size:15px}
+#s-keep{background:var(--accent-soft); color:var(--accent); border-radius:10px; padding:11px 14px; font-size:13.5px; font-weight:600}
+.recent-row{display:flex; align-items:center; gap:12px; padding:9px 0; border-bottom:1px solid var(--line); font-size:13px}
+.recent-row:last-child{border-bottom:none}
+.recent-row .rn{font-weight:500; flex:1}
+.recent-row .rs{color:var(--muted); font-size:12px}
+.recent-row .rp{font-weight:600}
+.chartwrap{position:relative; height:210px; margin-top:4px}
+.chartwrap.small{height:190px}
 .top .wrap{display:flex; align-items:center; gap:10px; min-height:62px; flex-wrap:wrap; padding-top:8px; padding-bottom:8px}
 .brand{font-family:var(--serif); font-weight:500; font-size:22px; letter-spacing:-.01em; display:flex; align-items:baseline; gap:.45ch}
 .brand em{font-style:italic; color:var(--accent)}
@@ -260,6 +288,27 @@ footer{margin:48px 0 36px; text-align:center; color:var(--muted); font-size:12px
     </div>
   </header>
 
+  <nav class="tabbar">
+    <div class="wrap tabbar-in">
+      <button class="tabbtn" data-tab="dash">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 19V9M10 19V5M16 19v-6M22 19H2" stroke-linecap="round"/></svg>
+        Dashboard
+      </button>
+      <button class="tabbtn" data-tab="inventory">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="4" rx="1"/><rect x="3" y="10" width="18" height="4" rx="1"/><rect x="3" y="16" width="18" height="4" rx="1"/></svg>
+        Inventory
+      </button>
+      <button class="tabbtn" data-tab="add">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+        Add new item
+      </button>
+      <button class="tabbtn" data-tab="sell">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M3 6l1.5 11a2 2 0 0 0 2 1.8h11a2 2 0 0 0 2-1.8L21 6M8 10v4M12 10v4M16 10v4"/></svg>
+        Record a sale
+      </button>
+    </div>
+  </nav>
+
   <main class="wrap">
 
     <div class="dirty" id="dirty">
@@ -268,13 +317,16 @@ footer{margin:48px 0 36px; text-align:center; color:var(--muted); font-size:12px
     </div>
 
     <!-- Metrics -->
+    <div class="tabpanel" data-panel="dash">
     <section class="block">
       <div class="h">Overview <span class="pill" id="updated"></span></div>
       <div class="metrics" id="metrics"></div>
       <div class="dash" id="dash"></div>
     </section>
+    </div>
 
     <!-- Add / edit -->
+    <div class="tabpanel" data-panel="add">
     <section class="block">
       <div class="h" id="formTitle">Add item</div>
       <div class="panel">
@@ -323,16 +375,19 @@ footer{margin:48px 0 36px; text-align:center; color:var(--muted); font-size:12px
               <input class="in" id="i-price" type="number" min="0" step="0.01" placeholder="e.g. 18.99" />
             </div>
             <div class="field-wrap">
+              <label class="lab" for="i-date">Date listed</label>
+              <input class="in" id="i-date" type="date" />
+            </div>
+            <div class="field-wrap full" id="editOnlyNote" style="display:none">
+              <div class="hint" style="background:var(--surface-2); border-radius:8px; padding:9px 12px">You're editing an existing item, so status and sale details are shown below. To record a brand-new sale, use the <b>Record a sale</b> tab instead — it captures the seller and commission properly.</div>
+            </div>
+            <div class="field-wrap" id="statusWrap" style="display:none">
               <label class="lab" for="i-status">Status</label>
               <select class="in" id="i-status">
                 <option value="available">Available</option>
                 <option value="reserved">Reserved</option>
                 <option value="sold">Sold</option>
               </select>
-            </div>
-            <div class="field-wrap">
-              <label class="lab" for="i-date">Date listed</label>
-              <input class="in" id="i-date" type="date" />
             </div>
             <div class="field-wrap" id="soldDateWrap" style="display:none">
               <label class="lab" for="i-solddate">Date sold</label>
@@ -343,6 +398,14 @@ footer{margin:48px 0 36px; text-align:center; color:var(--muted); font-size:12px
               <label class="lab" for="i-soldprice">Sold for (€)</label>
               <input class="in" id="i-soldprice" type="number" min="0" step="0.01" placeholder="e.g. 120" />
               <div class="hint">If you negotiated a different price than listed, put the real amount here — the shop and your stats will use this one.</div>
+            </div>
+            <div class="field-wrap" id="sellerWrap" style="display:none">
+              <label class="lab" for="i-seller">Seller (commercial)</label>
+              <input class="in" id="i-seller" list="dl-seller" placeholder="e.g. Laura" />
+            </div>
+            <div class="field-wrap" id="commissionWrap" style="display:none">
+              <label class="lab" for="i-commission">Commission (%)</label>
+              <input class="in" id="i-commission" type="number" min="0" max="100" step="0.1" placeholder="e.g. 12" />
             </div>
             <div class="field-wrap full">
               <label class="lab" for="i-vinted">Vinted link</label>
@@ -376,8 +439,10 @@ footer{margin:48px 0 36px; text-align:center; color:var(--muted); font-size:12px
         </div>
       </div>
     </section>
+    </div>
 
     <!-- Inventory table -->
+    <div class="tabpanel" data-panel="inventory">
     <section class="block">
       <div class="h">Inventory <span class="pill" id="invCount"></span></div>
       <div class="tools">
@@ -409,6 +474,79 @@ footer{margin:48px 0 36px; text-align:center; color:var(--muted); font-size:12px
         </table>
       </div>
     </section>
+    </div>
+
+    <!-- Record a sale -->
+    <div class="tabpanel" data-panel="sell">
+    <section class="block">
+      <div class="h">Record a sale</div>
+      <div class="panel" style="grid-template-columns:1fr">
+        <div class="formcol">
+          <div class="field-wrap full">
+            <label class="lab">How are we recording this sale?</label>
+            <div class="mseg" id="sellMode">
+              <button data-m="existing" class="active">Existing item</button>
+              <button data-m="new">New item (not catalogued yet)</button>
+            </div>
+          </div>
+
+          <div id="sellExistingWrap">
+            <div class="field-wrap full">
+              <label class="lab" for="sellPick">Which item sold?</label>
+              <select class="in" id="sellPick"><option value="">Choose an item…</option></select>
+            </div>
+            <div id="sellCardWrap" style="display:none"><div class="sellcard" id="sellCard"></div></div>
+          </div>
+
+          <div id="sellNewWrap" style="display:none">
+            <div class="hint" style="background:var(--surface-2); border-radius:8px; padding:9px 12px; margin-bottom:12px">Sold something on the spot that was never added to the catalogue? Fill it in here — it gets created and marked sold in one go.</div>
+            <div class="formgrid">
+              <div class="field-wrap full">
+                <label class="lab" for="sn-photo">Photo URL (optional)</label>
+                <input class="in" id="sn-photo" placeholder="Paste an image link here…" />
+              </div>
+              <div class="field-wrap full">
+                <label class="lab" for="sn-name">Name *</label>
+                <input class="in" id="sn-name" placeholder="e.g. Vintage leather bag" />
+              </div>
+              <div class="field-wrap"><label class="lab" for="sn-brand">Brand</label><input class="in" id="sn-brand" list="dl-brand" /></div>
+              <div class="field-wrap"><label class="lab" for="sn-category">Category</label><input class="in" id="sn-category" list="dl-category" /></div>
+              <div class="field-wrap"><label class="lab" for="sn-size">Size</label><input class="in" id="sn-size" list="dl-size" /></div>
+              <div class="field-wrap"><label class="lab" for="sn-price">Listed price (€)</label><input class="in" id="sn-price" type="number" min="0" step="0.01" placeholder="what it would've listed for" /></div>
+            </div>
+          </div>
+
+          <div id="sellDetails" style="display:none; margin-top:16px">
+            <div class="formgrid">
+              <div class="field-wrap">
+                <label class="lab" for="s-date">Date sold</label>
+                <input class="in" id="s-date" type="date" />
+              </div>
+              <div class="field-wrap">
+                <label class="lab" for="s-price">Sold for (€)</label>
+                <input class="in" id="s-price" type="number" min="0" step="0.01" />
+              </div>
+              <div class="field-wrap">
+                <label class="lab" for="s-seller">Seller (commercial)</label>
+                <input class="in" id="s-seller" list="dl-seller" placeholder="e.g. Laura — leave blank if you sold it yourself" />
+              </div>
+              <div class="field-wrap">
+                <label class="lab" for="s-commission">Commission (%)</label>
+                <input class="in" id="s-commission" type="number" min="0" max="100" step="0.1" placeholder="e.g. 12" />
+              </div>
+              <div class="field-wrap full" id="s-keep" style="display:none"></div>
+              <div class="formactions">
+                <button class="btn primary" id="btnMarkSold">Mark as sold</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="h" style="margin-top:28px; font-size:15px">Recent sales</div>
+      <div id="recentSales"></div>
+    </section>
+    </div>
 
     <footer>BPM closet admin · data saved in this browser until you download &amp; publish</footer>
   </main>
@@ -420,6 +558,7 @@ footer{margin:48px 0 36px; text-align:center; color:var(--muted); font-size:12px
 <datalist id="dl-category"></datalist>
 <datalist id="dl-color"></datalist>
 <datalist id="dl-condition"><option value="New with tags"><option value="Like new"><option value="Good condition"><option value="Fair condition"></datalist>
+<datalist id="dl-seller"></datalist>
 
 <!-- Publishing settings modal -->
 <div class="smodal" id="smodal">
@@ -466,6 +605,16 @@ const SES_KEY = "bpm_admin_ok";  // remembers you're unlocked during this tab se
 const $=s=>document.querySelector(s), $$=s=>Array.from(document.querySelectorAll(s));
 const norm=s=>(s||"").toString().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim();
 const money=n=>ADMIN.currency+Number(n||0).toLocaleString("en-GB",{minimumFractionDigits:2,maximumFractionDigits:2});
+const CHART_PALETTE=["#3F5246","#7c93c4","#c99a4a","#a25d5d","#5d8aa2","#8a6ca8","#6a9e6a","#c47a9e"];
+/* Creates (or replaces) a Chart.js chart on a canvas. Safe to call repeatedly —
+   destroys any previous chart on that canvas first so re-renders don't leak. */
+function ensureChart(sel,config){
+  if(typeof Chart==="undefined") return null;
+  const el=$(sel); if(!el) return null;
+  if(el._chart) el._chart.destroy();
+  el._chart=new Chart(el.getContext("2d"), config);
+  return el._chart;
+}
 /* Effective price of a sold item: the negotiated sold price if you set one,
    otherwise the original listed price. Used everywhere sales are totalled. */
 const soldValueOf=p=>(p.soldPrice!==undefined && p.soldPrice!==null && p.soldPrice!=="" && Number(p.soldPrice)>=0) ? Number(p.soldPrice) : Number(p.price||0);
@@ -546,6 +695,7 @@ function renderMetrics(){
   }
 
   const byCat=group("category"), byBrand=group("brand"), bySize=group("size");
+  const sellers=[...new Set(items.map(p=>p.seller).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
 
   // ── key facts card ──
   const priced=items.filter(p=>Number(p.price)>0);
@@ -554,6 +704,7 @@ function renderMetrics(){
   const noPhoto=items.filter(p=>!p.photo).length;
   const newTag=items.filter(p=>p.isNew).length;
   const discountTotal = sold.reduce((s,p)=>s+Math.max(0,Number(p.price||0)-soldValueOf(p)),0);
+  const totalCommission = sold.reduce((s,p)=>s+soldValueOf(p)*(Number(p.commissionPct||0)/100),0);
   const facts=[
     ["Whole catalogue value", money(totalValue)],
     ["Distinct brands", new Set(items.map(p=>p.brand).filter(Boolean)).size],
@@ -564,6 +715,23 @@ function renderMetrics(){
     ["Missing a photo", noPhoto],
     ["Negotiated sales", negotiatedCount+(negotiatedCount?" · gave up "+money(discountTotal):"")]
   ];
+  if(sellers.length) facts.push(["Commission owed to sellers", money(totalCommission)]);
+
+  // Extra insights: how fast things sell, your best month, your best seller
+  const withBothDates=sold.filter(p=>p.date && p.soldDate);
+  if(withBothDates.length){
+    const avgDays=Math.round(withBothDates.reduce((s,p)=>s+Math.max(0,(new Date(p.soldDate)-new Date(p.date))/86400000),0)/withBothDates.length);
+    facts.push(["Avg. days to sell", avgDays+(avgDays===1?" day":" days")]);
+  }
+  const monthLbl=k=>{ const [y,m]=k.split("-"); return new Date(y,m-1,1).toLocaleDateString("en-GB",{month:"short",year:"numeric"}); };
+  const revByMonth={}; sold.forEach(p=>{ const k=(p.soldDate||p.date||"").slice(0,7); if(!k) return; revByMonth[k]=(revByMonth[k]||0)+soldValueOf(p); });
+  const busiest=Object.entries(revByMonth).sort((a,b)=>b[1]-a[1])[0];
+  if(busiest) facts.push(["Busiest month", monthLbl(busiest[0])+" · "+money(busiest[1])]);
+  if(sellers.length){
+    const revBySeller={}; sold.forEach(p=>{ if(!p.seller) return; revBySeller[p.seller]=(revBySeller[p.seller]||0)+soldValueOf(p); });
+    const top=Object.entries(revBySeller).sort((a,b)=>b[1]-a[1])[0];
+    if(top) facts.push(["Top seller", esc(top[0])+" · "+money(top[1])]);
+  }
 
   $("#dash").innerHTML =
     `<div class="dcard"><h3>By category</h3>${bars(byCat)}</div>`+
@@ -574,6 +742,10 @@ function renderMetrics(){
        <div class="brandpick"><select class="in" id="brandPick"><option value="">Choose a brand…</option>${byBrand.map(([b])=>`<option value="${esc(b)}">${esc(b)}</option>`).join("")}</select></div>
        <div id="brandStats"></div>
      </div>`+
+    (sellers.length ? `<div class="dcard wide"><h3>Explore by seller</h3>
+       <div class="brandpick"><select class="in" id="sellerPick"><option value="">Choose a seller…</option>${sellers.map(s=>`<option value="${esc(s)}">${esc(s)}</option>`).join("")}</select></div>
+       <div id="sellerStats"></div>
+     </div>` : "")+
     `<div class="dcard wide"><h3>Sales over time</h3>
        <div class="mtools">
          <div class="mseg" id="grainPick"><button data-g="month" class="active">By month</button><button data-g="year">By year</button></div>
@@ -589,7 +761,28 @@ function renderMetrics(){
   bp.addEventListener("change",()=>renderBrandStats(bp.value));
   renderBrandStats("");
 
+  // seller explorer wiring
+  if(sellers.length){
+    const sp=$("#sellerPick");
+    sp.addEventListener("change",()=>renderSellerStats(sp.value));
+    renderSellerStats("");
+  }
+
   setupMonthlyControls();
+}
+
+function renderSellerStats(seller){
+  const box=$("#sellerStats"); if(!box) return;
+  if(!seller){ box.innerHTML=`<div class="dnote">Pick a seller above to see their numbers</div>`; return; }
+  const mine=items.filter(p=>p.status==="sold" && norm(p.seller)===norm(seller));
+  const revenue=mine.reduce((s,p)=>s+soldValueOf(p),0);
+  const commission=mine.reduce((s,p)=>s+soldValueOf(p)*(Number(p.commissionPct||0)/100),0);
+  box.innerHTML = `<div class="bstats">
+    <div class="bstat"><div class="v">${mine.length}</div><div class="k">Sold</div></div>
+    <div class="bstat"><div class="v">${money(revenue)}</div><div class="k">Revenue</div></div>
+    <div class="bstat"><div class="v">${money(commission)}</div><div class="k">Commission owed</div></div>
+    <div class="bstat"><div class="v">${money(revenue-commission)}</div><div class="k">You keep</div></div>
+  </div>`;
 }
 
 function renderBrandStats(brand){
@@ -661,9 +854,13 @@ function renderMonthlySection(){
   if(monthView==="chart"){
     const byCat={}; mine.forEach(p=>{ const k=(p.category||"—").trim()||"—"; if(!byCat[k]) byCat[k]={n:0,val:0}; byCat[k].n++; byCat[k].val+=soldValueOf(p); });
     const entries=Object.entries(byCat).sort((a,b)=>b[1].val-a[1].val);
-    const peak=Math.max(1,...entries.map(([,v])=>v.val));
-    const bars=entries.map(([k,v])=>`<div class="bar"><div class="lab"><b>${esc(k)}</b><span class="c">${v.n} · ${money(v.val)}</span></div><div class="track"><div class="fill" style="width:${Math.round(v.val/peak*100)}%"></div></div></div>`).join("")||`<div class="dnote">No data</div>`;
-    $("#monthDetail").innerHTML = summary + `<div style="margin-top:6px">${bars}</div>`;
+    if(!entries.length){ $("#monthDetail").innerHTML = summary + `<div class="dnote">No data</div>`; return; }
+    $("#monthDetail").innerHTML = summary + `<div class="chartwrap small"><canvas id="chartPeriodCat"></canvas></div>`;
+    ensureChart("#chartPeriodCat", {
+      type:"doughnut",
+      data:{ labels:entries.map(([k])=>k), datasets:[{ data:entries.map(([,v])=>Number(v.val.toFixed(2))), backgroundColor:CHART_PALETTE, borderWidth:0 }] },
+      options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ position:"right", labels:{ boxWidth:12, font:{size:11} } } } }
+    });
   } else {
     const rows=mine.slice().sort((a,b)=>(b.soldDate||b.date||"").localeCompare(a.soldDate||a.date||"")).map(p=>
       `<tr><td>${esc(p.name||"—")}</td><td>${esc(p.brand||"—")}</td><td>${esc((p.soldDate||p.date||"").slice(0,10))}</td><td class="p">${priceCell(p)}</td></tr>`).join("");
@@ -677,18 +874,26 @@ function renderMonthlyOverview(sold){
   sold.forEach(p=>{ const k=periodKeyOf(p); if(!k) return; if(!byPeriod[k]) byPeriod[k]={n:0,val:0}; byPeriod[k].n++; byPeriod[k].val+=soldValueOf(p); });
   const keys=Object.keys(byPeriod).sort();
   if(!keys.length){ box.innerHTML=`<div class="dnote">Sold items don't have a sale date yet</div>`; return; }
-  const peak=Math.max(1,...keys.map(k=>byPeriod[k].val));
   const showKeys = periodGrain==="year" ? keys : keys.slice(-12);
-  const rows=showKeys.map((k,i,arr)=>{
-    const cur=byPeriod[k], prevKey=arr[i-1]; const prev=prevKey?byPeriod[prevKey]:null;
-    let trend="";
-    if(prev){ const diff=cur.val-prev.val; const pct=prev.val?Math.round(diff/prev.val*100):0;
-      trend = diff>=0 ? `<span class="trend up">▲ ${pct}%</span>` : `<span class="trend down">▼ ${Math.abs(pct)}%</span>`; }
-    return `<div class="monthrow"><span class="m">${periodShort(k)}</span><div class="track"><div class="fill" style="width:${Math.round(cur.val/peak*100)}%"></div></div><span class="n">${cur.n}</span><span class="val">${money(cur.val)}</span>${trend?`<div style="grid-column:1/-1; text-align:right; margin-top:-2px">${trend}</div>`:""}</div>`;
-  }).join("");
   const totalN=sold.length, totalVal=sold.reduce((s,p)=>s+soldValueOf(p),0);
   const noDate=sold.filter(p=>!periodKeyOf(p)).length;
-  box.innerHTML = rows + `<div class="kv" style="margin-top:8px; border-top:1px solid var(--line); padding-top:10px"><span class="k">All-time sold</span><span class="v">${totalN} items · ${money(totalVal)}</span></div>` + (noDate?`<div class="dnote">${noDate} sold item(s) have no date and aren't shown above</div>`:"");
+  // Trend vs previous period, shown as a compact line under the chart
+  const lastIdx=showKeys.length-1, prevKey=showKeys[lastIdx-1];
+  let trendLine="";
+  if(prevKey){
+    const cur=byPeriod[showKeys[lastIdx]], prev=byPeriod[prevKey];
+    const diff=cur.val-prev.val; const pct=prev.val?Math.round(diff/prev.val*100):0;
+    trendLine = diff>=0 ? `<span class="trend up">▲ ${pct}% vs previous ${periodNoun()}</span>` : `<span class="trend down">▼ ${Math.abs(pct)}% vs previous ${periodNoun()}</span>`;
+  }
+  box.innerHTML = `<div class="chartwrap"><canvas id="chartOverview"></canvas></div>`+
+    `<div class="kv" style="margin-top:10px; border-top:1px solid var(--line); padding-top:10px"><span class="k">All-time sold</span><span class="v">${totalN} items · ${money(totalVal)}</span></div>`+
+    (trendLine?`<div style="text-align:right; margin-top:4px">${trendLine}</div>`:"")+
+    (noDate?`<div class="dnote">${noDate} sold item(s) have no date and aren't shown above</div>`:"");
+  ensureChart("#chartOverview", {
+    type:"bar",
+    data:{ labels:showKeys.map(periodShort), datasets:[{ label:"Revenue (€)", data:showKeys.map(k=>Number(byPeriod[k].val.toFixed(2))), backgroundColor:"#3F5246", borderRadius:4, maxBarThickness:34 }] },
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:false } }, scales:{ y:{ beginAtZero:true, ticks:{ font:{size:11} } }, x:{ ticks:{ font:{size:11} } } } }
+  });
 }
 
 function renderAllSoldList(sold){
@@ -699,7 +904,7 @@ function renderAllSoldList(sold){
 
 /* ── render: datalists ────────────────────────────────────────────────── */
 function fillDatalist(id,field){ const vals=[...new Set(items.map(p=>p[field]).filter(Boolean))].sort((a,b)=>(""+a).localeCompare(""+b)); $(id).innerHTML=vals.map(v=>`<option value="${v.replace(/"/g,'&quot;')}">`).join(""); }
-function refreshDatalists(){ fillDatalist("#dl-brand","brand"); fillDatalist("#dl-size","size"); fillDatalist("#dl-category","category"); fillDatalist("#dl-color","color"); }
+function refreshDatalists(){ fillDatalist("#dl-brand","brand"); fillDatalist("#dl-size","size"); fillDatalist("#dl-category","category"); fillDatalist("#dl-color","color"); fillDatalist("#dl-seller","seller"); }
 
 /* ── render: table ────────────────────────────────────────────────────── */
 let tableFilter="all";
@@ -716,7 +921,7 @@ function renderTable(){
     const st = STATUS[p.status]||["—","var(--muted)"];
     return `<tr>
       <td><img class="tthumb" loading="lazy" referrerpolicy="no-referrer" src="${img}" onerror="this.src='${placeholder(p.color,p.category)}'" alt=""></td>
-      <td><div class="tname">${esc(p.name||"(no name)")}</div><div class="tbrand">${esc(p.brand||"")}</div></td>
+      <td><div class="tname">${esc(p.name||"(no name)")}</div><div class="tbrand">${esc(p.brand||"")}${p.status==="sold"&&p.seller?` · sold via ${esc(p.seller)}`:""}</div></td>
       <td class="colhide">${esc(p.size||"–")}</td>
       <td class="colhide">${p.status==="sold"?priceCell(p):money(p.price)}</td>
       <td>
@@ -760,6 +965,7 @@ function renderPreview(){
 
 /* ── form: collect / fill / reset ─────────────────────────────────────── */
 function readForm(){
+  const editing = editIndex>=0;
   return {
     photo:$("#i-photo").value.trim(),
     name:$("#i-name").value.trim(),
@@ -769,12 +975,14 @@ function readForm(){
     color:$("#i-color").value.trim(),
     condition:$("#i-condition").value.trim(),
     price:$("#i-price").value===""?0:Number($("#i-price").value),
-    status:$("#i-status").value,
+    status: editing ? $("#i-status").value : "available", // brand-new items always start Available; use the Sell tab to mark a sale
     vintedLink:$("#i-vinted").value.trim(),
     notes:$("#i-notes").value.trim(),
     date:$("#i-date").value||"",
-    soldDate:$("#i-status").value==="sold" ? ($("#i-solddate").value||new Date().toISOString().slice(0,10)) : "",
-    soldPrice:$("#i-status").value==="sold" && $("#i-soldprice").value!=="" ? Number($("#i-soldprice").value) : "",
+    soldDate: editing && $("#i-status").value==="sold" ? ($("#i-solddate").value||new Date().toISOString().slice(0,10)) : "",
+    soldPrice: editing && $("#i-status").value==="sold" && $("#i-soldprice").value!=="" ? Number($("#i-soldprice").value) : "",
+    seller: editing && $("#i-status").value==="sold" ? $("#i-seller").value.trim() : "",
+    commissionPct: editing && $("#i-status").value==="sold" && $("#i-commission").value!=="" ? Number($("#i-commission").value) : "",
     isNew:$("#i-new").checked
   };
 }
@@ -782,6 +990,8 @@ function toggleSoldFields(){
   const isSold=$("#i-status").value==="sold";
   $("#soldDateWrap").style.display=isSold?"":"none";
   $("#soldPriceWrap").style.display=isSold?"":"none";
+  $("#sellerWrap").style.display=isSold?"":"none";
+  $("#commissionWrap").style.display=isSold?"":"none";
   if(isSold && !$("#i-solddate").value) $("#i-solddate").value=new Date().toISOString().slice(0,10);
   if(isSold && $("#i-soldprice").value==="" && $("#i-price").value!=="") $("#i-soldprice").value=$("#i-price").value;
 }
@@ -791,17 +1001,21 @@ function fillForm(p){
   $("#i-condition").value=p.condition||""; $("#i-price").value=(p.price??""); $("#i-status").value=p.status||"available";
   $("#i-vinted").value=p.vintedLink||""; $("#i-notes").value=p.notes||""; $("#i-date").value=p.date||""; $("#i-new").checked=!!p.isNew;
   $("#i-solddate").value=p.soldDate||""; $("#i-soldprice").value=(p.soldPrice??"");
+  $("#i-seller").value=p.seller||""; $("#i-commission").value=(p.commissionPct??"");
   toggleSoldFields();
   renderPreview();
 }
 function resetForm(keepSticky=false){
-  const keep = keepSticky ? { brand:$("#i-brand").value, category:$("#i-category").value, condition:$("#i-condition").value, date:$("#i-date").value, status:$("#i-status").value } : null;
-  ["#i-photo","#i-name","#i-brand","#i-size","#i-category","#i-color","#i-condition","#i-price","#i-vinted","#i-notes","#i-solddate","#i-soldprice"].forEach(s=>$(s).value="");
+  const keep = keepSticky ? { brand:$("#i-brand").value, category:$("#i-category").value, condition:$("#i-condition").value, date:$("#i-date").value } : null;
+  ["#i-photo","#i-name","#i-brand","#i-size","#i-category","#i-color","#i-condition","#i-price","#i-vinted","#i-notes","#i-solddate","#i-soldprice","#i-seller","#i-commission"].forEach(s=>$(s).value="");
   $("#i-status").value="available"; $("#i-new").checked=false;
   $("#i-date").value=new Date().toISOString().slice(0,10);
-  if(keep){ $("#i-brand").value=keep.brand; $("#i-category").value=keep.category; $("#i-condition").value=keep.condition; if(keep.date) $("#i-date").value=keep.date; $("#i-status").value=keep.status; }
+  if(keep){ $("#i-brand").value=keep.brand; $("#i-category").value=keep.category; $("#i-condition").value=keep.condition; if(keep.date) $("#i-date").value=keep.date; }
+  editIndex=-1;
+  // Adding a brand-new item: hide status/sale fields entirely, it's always Available
+  $("#statusWrap").style.display="none"; $("#editOnlyNote").style.display="none";
   toggleSoldFields();
-  editIndex=-1; $("#formTitle").textContent="Add item"; $("#btnSave").textContent="Add item"; $("#btnCancel").style.display="none";
+  $("#formTitle").textContent="Add item"; $("#btnSave").textContent="Add item"; $("#btnCancel").style.display="none";
   syncChips(); renderPreview();
 }
 
@@ -819,12 +1033,14 @@ function saveItem(){
   $("#i-photo").focus();
 }
 function editItem(idx){
-  if(editIndex>=0 && editIndex!==idx){ /* switching item mid-edit */ }
+  setActiveTab("add");
   editIndex=idx; fillForm(items[idx]);
+  $("#statusWrap").style.display=""; $("#editOnlyNote").style.display="";
   $("#formTitle").textContent="Edit item · remember to press Update, then Publish";
   $("#btnSave").textContent="Update item"; $("#btnCancel").style.display="";
   syncChips(); renderPreview();
-  document.querySelector(".panel").scrollIntoView({behavior:"smooth",block:"center"});
+  const panel=document.querySelector('[data-panel="add"] .panel');
+  if(panel && panel.scrollIntoView) panel.scrollIntoView({behavior:"smooth",block:"center"});
 }
 function deleteItem(idx){
   if(!confirm(`Delete “${items[idx].name||"this item"}”?`)) return;
@@ -833,20 +1049,23 @@ function deleteItem(idx){
   toastAction("Item deleted.","Undo",()=>{ if(!lastDeleted) return; items.splice(Math.min(lastDeleted.idx,items.length),0,lastDeleted.item); lastDeleted=null; markDirty(true); saveLocal(); refreshAll(); toast("Restored"); });
 }
 function quickStatus(idx,val){
-  items[idx].status=val;
   if(val==="sold"){
-    if(!items[idx].soldDate) items[idx].soldDate=new Date().toISOString().slice(0,10);
-    const listed=Number(items[idx].price||0);
-    const ans=prompt("Sold for how much? (listed at "+money(listed)+" — leave blank if that's the real price)","");
-    if(ans!==null && ans.trim()!==""){ const n=Number(ans); if(!isNaN(n) && n>=0) items[idx].soldPrice=n; }
+    // Selling needs a seller & commission captured properly — send them to the Sell tab instead of guessing
+    renderTable(); // reverts the <select> back to its real current value
+    setActiveTab("sell");
+    $("#sellPick").value=String(idx);
+    onSellPick();
+    toast("Fill in the sale details here, then press Mark as sold");
+    return;
   }
+  items[idx].status=val;
   markDirty(true); saveLocal(); renderMetrics(); renderTable();
 }
 function dupItem(idx){ const copy={...items[idx], name:(items[idx].name||"Item")+" (copy)"}; items.splice(idx+1,0,copy); markDirty(true); saveLocal(); refreshAll(); toast("Item duplicated — edit it"); editItem(idx+1); }
 window.editItem=editItem; window.deleteItem=deleteItem; window.quickStatus=quickStatus; window.dupItem=dupItem;
 
 /* ── CSV helpers ──────────────────────────────────────────────────────── */
-const CSV_COLS=["photo","name","brand","size","category","color","condition","price","status","vintedLink","notes","date","soldDate","soldPrice","isNew"];
+const CSV_COLS=["photo","name","brand","size","category","color","condition","price","status","vintedLink","notes","date","soldDate","soldPrice","seller","commissionPct","isNew"];
 function csvCell(v){ v=(v==null?"":String(v)); return /[",\n]/.test(v) ? '"'+v.replace(/"/g,'""')+'"' : v; }
 function toCSV(list){
   const head=CSV_COLS.join(",");
@@ -870,6 +1089,7 @@ function parseCSV(text){
       color:o.color||"", condition:o.condition||"", price:o.price?Number(o.price):0, status:(o.status||"available").toLowerCase(),
       vintedLink:o.vintedLink||o.vinted||"", notes:o.notes||"", date:o.date||"", soldDate:o.soldDate||"",
       soldPrice:o.soldPrice?Number(o.soldPrice):"",
+      seller:o.seller||"", commissionPct:o.commissionPct?Number(o.commissionPct):"",
       isNew:/^(true|1|yes|si|sí)$/i.test(o.isNew||"")
     };
   });
@@ -910,6 +1130,7 @@ function downloadExcelReport(){
   const availValue=avail.reduce((s,p)=>s+Number(p.price||0),0);
   const soldValue=sold.reduce((s,p)=>s+soldValueOf(p),0);
   const discountTotal=sold.reduce((s,p)=>s+Math.max(0,Number(p.price||0)-soldValueOf(p)),0);
+  const totalCommission=sold.reduce((s,p)=>s+soldValueOf(p)*(Number(p.commissionPct||0)/100),0);
 
   // Sheet 1 — Summary
   const summaryRows=[
@@ -922,6 +1143,8 @@ function downloadExcelReport(){
     ["Available value (€)", Number(availValue.toFixed(2))],
     ["Sold revenue (€)", Number(soldValue.toFixed(2))],
     ["Total discount given on sales (€)", Number(discountTotal.toFixed(2))],
+    ["Total commission owed to sellers (€)", Number(totalCommission.toFixed(2))],
+    ["Net revenue after commissions (€)", Number((soldValue-totalCommission).toFixed(2))],
     ["Distinct brands", new Set(items.map(p=>p.brand).filter(Boolean)).size],
     ["Distinct categories", new Set(items.map(p=>p.category).filter(Boolean)).size],
   ];
@@ -939,17 +1162,24 @@ function downloadExcelReport(){
   const yearRows=[["Year","Items sold","Revenue (€)"]].concat(Object.keys(byYear).sort().map(k=>[k, byYear[k].n, Number(byYear[k].val.toFixed(2))]));
   XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(yearRows), "Sales by year");
 
-  // Sheet 4 — Every sold item, itemised
-  const soldRows=[["Item","Brand","Category","Size","Listed price (€)","Sold price (€)","Sold on"]].concat(
-    sold.slice().sort((a,b)=>(b.soldDate||b.date||"").localeCompare(a.soldDate||a.date||"")).map(p=>[
-      p.name||"", p.brand||"", p.category||"", p.size||"",
-      Number(p.price||0), Number(soldValueOf(p)), p.soldDate||p.date||""
-    ]));
+  // Sheet 4 — Every sold item, itemised (with seller & commission)
+  const soldRows=[["Item","Brand","Category","Size","Listed price (€)","Sold price (€)","Sold on","Seller","Commission (%)","Commission (€)","Net to you (€)"]].concat(
+    sold.slice().sort((a,b)=>(b.soldDate||b.date||"").localeCompare(a.soldDate||a.date||"")).map(p=>{
+      const eff=soldValueOf(p); const pct=Number(p.commissionPct||0); const comm=eff*pct/100;
+      return [p.name||"", p.brand||"", p.category||"", p.size||"", Number(p.price||0), Number(eff), p.soldDate||p.date||"", p.seller||"", pct||"", Number(comm.toFixed(2)), Number((eff-comm).toFixed(2))];
+    }));
   XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(soldRows), "Sold items");
 
-  // Sheet 5 — Full current inventory
-  const invRows=[["Item","Brand","Category","Size","Color","Condition","Price (€)","Status","Listed on","Sold on","Sold price (€)","Vinted link","Notes"]].concat(
-    items.map(p=>[p.name||"", p.brand||"", p.category||"", p.size||"", p.color||"", p.condition||"", Number(p.price||0), p.status||"", p.date||"", p.soldDate||"", p.soldPrice!==undefined&&p.soldPrice!==""?Number(p.soldPrice):"", p.vintedLink||"", p.notes||""]));
+  // Sheet 5 — By seller (includes a "— sold directly" row for items with no seller)
+  const bySeller={};
+  sold.forEach(p=>{ const k=p.seller||"— sold directly"; if(!bySeller[k]) bySeller[k]={n:0,rev:0,comm:0}; const eff=soldValueOf(p); const comm=eff*(Number(p.commissionPct||0)/100); bySeller[k].n++; bySeller[k].rev+=eff; bySeller[k].comm+=comm; });
+  const sellerRows=[["Seller","Items sold","Revenue (€)","Commission owed (€)","Net to you (€)"]].concat(
+    Object.entries(bySeller).sort((a,b)=>b[1].rev-a[1].rev).map(([k,v])=>[k, v.n, Number(v.rev.toFixed(2)), Number(v.comm.toFixed(2)), Number((v.rev-v.comm).toFixed(2))]));
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(sellerRows), "By seller");
+
+  // Sheet 6 — Full current inventory
+  const invRows=[["Item","Brand","Category","Size","Color","Condition","Price (€)","Status","Listed on","Sold on","Sold price (€)","Seller","Commission (%)","Vinted link","Notes"]].concat(
+    items.map(p=>[p.name||"", p.brand||"", p.category||"", p.size||"", p.color||"", p.condition||"", Number(p.price||0), p.status||"", p.date||"", p.soldDate||"", p.soldPrice!==undefined&&p.soldPrice!==""?Number(p.soldPrice):"", p.seller||"", p.commissionPct!==undefined&&p.commissionPct!==""?Number(p.commissionPct):"", p.vintedLink||"", p.notes||""]));
   XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(invRows), "Full inventory");
 
   const stamp=new Date().toISOString().slice(0,10);
@@ -1049,7 +1279,7 @@ async function reloadPublished(){
   await loadData(); refreshAll(); toast("Loaded the published catalogue");
 }
 
-function refreshAll(){ renderMetrics(); renderTable(); refreshDatalists(); $("#updated").textContent="updated "+new Date().toLocaleString("en-GB",{day:"2-digit",month:"short",hour:"2-digit",minute:"2-digit"}); }
+function refreshAll(){ renderMetrics(); renderTable(); refreshDatalists(); populateSellPick(); renderRecentSales(); $("#updated").textContent="updated "+new Date().toLocaleString("en-GB",{day:"2-digit",month:"short",hour:"2-digit",minute:"2-digit"}); }
 
 /* ── theme ────────────────────────────────────────────────────────────── */
 const SUN=`<circle cx="12" cy="12" r="4.5"/><path d="M12 2v2M12 20v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M2 12h2M20 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4" stroke-linecap="round"/>`;
@@ -1057,11 +1287,124 @@ const MOON=`<path d="M20 14.5A8 8 0 1 1 9.5 4 6.5 6.5 0 0 0 20 14.5Z"/>`;
 function setTheme(t){ document.documentElement.setAttribute("data-theme",t); $("#themeIcon").innerHTML=t==="dark"?SUN:MOON; try{ localStorage.setItem("theme",t); }catch(e){} }
 (function(){ let t="light"; try{ t=localStorage.getItem("theme"); }catch(e){} if(!t) t=matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"; setTheme(t); })();
 
+/* ── tabs ─────────────────────────────────────────────────────────────── */
+let activeTab="dash";
+function setActiveTab(name){
+  activeTab=name;
+  $$(".tabbtn").forEach(b=>b.classList.toggle("active", b.dataset.tab===name));
+  $$(".tabpanel").forEach(p=>p.classList.toggle("active", p.dataset.panel===name));
+  if(name==="sell"){ populateSellPick(); renderRecentSales(); }
+}
+$$(".tabbtn").forEach(b=>b.addEventListener("click",()=>setActiveTab(b.dataset.tab)));
+
+/* ── Record a sale ────────────────────────────────────────────────────── */
+let sellMode="existing";
+function setSellMode(mode){
+  sellMode=mode;
+  $$("#sellMode button").forEach(b=>b.classList.toggle("active", b.dataset.m===mode));
+  $("#sellExistingWrap").style.display = mode==="existing" ? "" : "none";
+  $("#sellNewWrap").style.display = mode==="new" ? "" : "none";
+  if(mode==="new"){
+    $("#sellDetails").style.display="";
+    if(!$("#s-date").value) $("#s-date").value=new Date().toISOString().slice(0,10);
+    updateKeep();
+  } else {
+    $("#sellDetails").style.display = $("#sellPick").value!=="" ? "" : "none";
+  }
+}
+$$("#sellMode button").forEach(b=>b.addEventListener("click",()=>setSellMode(b.dataset.m)));
+
+function populateSellPick(){
+  const sel=$("#sellPick"); if(!sel) return;
+  const cur=sel.value;
+  const sellable=items.map((p,idx)=>({p,idx})).filter(({p})=>p.status==="available"||p.status==="reserved");
+  sel.innerHTML=`<option value="">Choose an item…</option>`+sellable.map(({p,idx})=>
+    `<option value="${idx}">${esc(p.name||"(no name)")} — ${esc(p.brand||"No brand")} — ${money(p.price)}${p.status==="reserved"?" (reserved)":""}</option>`).join("");
+  if(sellable.some(({idx})=>String(idx)===cur)) sel.value=cur;
+  else { sel.value=""; if(sellMode==="existing") $("#sellDetails").style.display="none"; $("#sellCardWrap").style.display="none"; }
+}
+function lastCommissionFor(seller){
+  if(!seller) return "";
+  const past=items.filter(p=>p.status==="sold" && norm(p.seller)===norm(seller) && p.commissionPct!==undefined && p.commissionPct!=="")
+                  .sort((a,b)=>(b.soldDate||b.date||"").localeCompare(a.soldDate||a.date||""));
+  return past.length ? past[0].commissionPct : "";
+}
+function updateKeep(){
+  const price=Number($("#s-price").value||0);
+  const pct=Number($("#s-commission").value||0);
+  const seller=$("#s-seller").value.trim();
+  const box=$("#s-keep");
+  if(!seller || pct<=0){ box.style.display="none"; return; }
+  const commission=price*pct/100;
+  box.style.display=""; box.textContent=`Commission for ${seller}: ${money(commission)} · You keep: ${money(price-commission)}`;
+}
+function onSellPick(){
+  const idx=$("#sellPick").value;
+  if(idx===""){ $("#sellDetails").style.display="none"; $("#sellCardWrap").style.display="none"; return; }
+  const p=items[Number(idx)]; if(!p) return;
+  $("#sellDetails").style.display=""; $("#sellCardWrap").style.display="";
+  const img=p.photo?normalizePhoto(p.photo):placeholder(p.color,p.category);
+  $("#sellCard").innerHTML=`<img src="${img}" onerror="this.src='${placeholder(p.color,p.category)}'" alt=""><div><div class="sn">${esc(p.name||"(no name)")}</div><div class="sb">${esc(p.brand||"No brand")} · ${esc(p.size||"–")}</div></div><div class="sp">${money(p.price)}</div>`;
+  $("#s-date").value=new Date().toISOString().slice(0,10);
+  $("#s-price").value=p.price??"";
+  $("#s-seller").value=p.seller||"";
+  $("#s-commission").value=lastCommissionFor(p.seller||"");
+  updateKeep();
+}
+function resetSellFields(){
+  $("#sellPick").value=""; $("#sellDetails").style.display="none"; $("#sellCardWrap").style.display="none";
+  ["#sn-photo","#sn-name","#sn-brand","#sn-category","#sn-size","#sn-price","#s-price","#s-seller","#s-commission"].forEach(s=>$(s).value="");
+  $("#s-keep").style.display="none";
+}
+function commitSale(){
+  if(sellMode==="existing"){
+    const idx=$("#sellPick").value;
+    if(idx===""){ toast("Pick an item first"); return; }
+    const i=Number(idx); const p=items[i]; if(!p) return;
+    p.status="sold";
+    p.soldDate=$("#s-date").value||new Date().toISOString().slice(0,10);
+    p.soldPrice = $("#s-price").value!==""? Number($("#s-price").value) : p.price;
+    p.seller=$("#s-seller").value.trim();
+    p.commissionPct = p.seller && $("#s-commission").value!=="" ? Number($("#s-commission").value) : "";
+  } else {
+    const name=$("#sn-name").value.trim();
+    if(!name){ toast("Add a name for the new item first"); $("#sn-name").focus(); return; }
+    const dup=items.find(p=>norm(p.name)===norm(name));
+    if(dup && !confirm(`You already have an item called “${dup.name}”. Add this sale anyway?`)) return;
+    const listedPrice = $("#sn-price").value!==""? Number($("#sn-price").value) : Number($("#s-price").value||0);
+    const soldPrice = $("#s-price").value!==""? Number($("#s-price").value) : listedPrice;
+    items.unshift({
+      photo:$("#sn-photo").value.trim(), name, brand:$("#sn-brand").value.trim(),
+      category:$("#sn-category").value.trim(), size:$("#sn-size").value.trim(),
+      color:"", condition:"", price:listedPrice, status:"sold",
+      vintedLink:"", notes:"", date:new Date().toISOString().slice(0,10),
+      soldDate:$("#s-date").value||new Date().toISOString().slice(0,10),
+      soldPrice, seller:$("#s-seller").value.trim(),
+      commissionPct: $("#s-seller").value.trim() && $("#s-commission").value!=="" ? Number($("#s-commission").value) : "",
+      isNew:false
+    });
+  }
+  markDirty(true); saveLocal(); refreshAll();
+  resetSellFields();
+  toast("Sale recorded — press Publish to make it live");
+}
+function renderRecentSales(){
+  const box=$("#recentSales"); if(!box) return;
+  const sold=items.filter(p=>p.status==="sold").slice().sort((a,b)=>(b.soldDate||b.date||"").localeCompare(a.soldDate||a.date||"")).slice(0,8);
+  if(!sold.length){ box.innerHTML=`<div class="dnote">No sales recorded yet</div>`; return; }
+  box.innerHTML = sold.map(p=>`<div class="recent-row"><span class="rn">${esc(p.name||"—")}</span><span class="rs">${esc(p.seller||"sold directly")}${p.soldDate?" · "+esc(p.soldDate):""}</span><span class="rp">${priceCell(p)}</span></div>`).join("");
+}
+$("#sellPick").addEventListener("change",onSellPick);
+$("#sn-price").addEventListener("input",()=>{ if($("#s-price").value==="") $("#s-price").value=$("#sn-price").value; updateKeep(); });
+["#s-price","#s-seller","#s-commission"].forEach(s=>$(s).addEventListener("input",()=>{ if($(s)===$("#s-seller") && $("#s-commission").value==="") $("#s-commission").value=lastCommissionFor($("#s-seller").value); updateKeep(); }));
+$("#btnMarkSold").addEventListener("click",commitSale);
+
+
 /* ── gate / unlock ────────────────────────────────────────────────────── */
 async function unlock(){
   $("#gate").style.display="none"; $("#app").style.display="block";
   try{ sessionStorage.setItem(SES_KEY,"1"); }catch(e){}
-  await loadData(); resetForm(); refreshAll();
+  await loadData(); resetForm(); refreshAll(); setActiveTab("dash");
 }
 function tryEnter(){
   const v=$("#pass").value;
@@ -1138,4 +1481,3 @@ $("#i-status").addEventListener("change",()=>{ toggleSoldFields(); renderPreview
 </script>
 </body>
 </html>
- 
