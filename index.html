@@ -23,9 +23,9 @@
 :root{
   --black:#0E0E0D; --asphalt:#1a1a1a; --asphalt-2:#242424;
   --bone:#EDEBE4; --bone-dim:#d1ccc5;
-  --dust:#9b958c; --pink:#C9A79E;
+  --dust:#9b958c; --pink:#93A6AC;
   --ink:#111110;
-  --sold:#8f7a72; --reserved:#C9A79E;
+  --sold:#8f7a72; --reserved:#93A6AC;
   /* Signature accents: one bold risk, spent deliberately.
      --neon = alarm red, reserved ONLY for urgency (Sold / New / primary CTA).
      --concrete = cool structural grey, used ONLY for major layout dividers
@@ -58,16 +58,26 @@ input,select,textarea{font-family:inherit}
 @keyframes grain{0%,100%{transform:translate(0,0)}10%{transform:translate(-4%,-8%)}20%{transform:translate(-12%,4%)}30%{transform:translate(6%,-18%)}40%{transform:translate(-4%,18%)}50%{transform:translate(-12%,8%)}60%{transform:translate(12%,0)}70%{transform:translate(0,12%)}80%{transform:translate(3%,26%)}90%{transform:translate(-8%,8%)}}
 
 /* ── intro loader ─────────────────────────────────────────────────────── */
-#loader{position:fixed; inset:0; background:var(--bone); z-index:1000; display:flex; align-items:center; justify-content:center; transition:opacity .9s cubic-bezier(.77,0,.175,1)}
-#loader.hide{opacity:0; pointer-events:none}
-#loader h1{font-family:var(--serif); font-weight:700; font-size:clamp(28px,6vw,52px); letter-spacing:.35em; margin:0; mix-blend-mode:difference; color:#fff; position:relative; z-index:2}
-.bath{position:absolute; inset:0; background:var(--black); height:0%; animation:bath 1.4s forwards cubic-bezier(.65,0,.35,1)}
-@keyframes bath{to{height:100%}}
+/* ── intro: vintage video with the logo centred, click/tap to enter ────── */
+#intro{position:fixed; inset:0; background:var(--black); z-index:1000; display:flex; align-items:center; justify-content:center; overflow:hidden; cursor:pointer; transition:opacity 1s cubic-bezier(.77,0,.175,1)}
+#intro.hide{opacity:0; pointer-events:none}
+#intro video{position:absolute; inset:0; width:100%; height:100%; object-fit:cover; filter:grayscale(.25) contrast(1.05) brightness(.75)}
+#intro .veil{position:absolute; inset:0; background:radial-gradient(ellipse at center, rgba(0,0,0,.35) 0%, rgba(0,0,0,.72) 100%)}
+#intro .logo-wrap{position:relative; z-index:2; display:flex; flex-direction:column; align-items:center; gap:26px; padding:20px}
+#intro .logo-wrap img{width:min(58vw,340px); height:auto; animation:logo-breathe 4.5s ease-in-out infinite}
+@keyframes logo-breathe{0%,100%{opacity:.88; transform:scale(1)}50%{opacity:1; transform:scale(1.03)}}
+#intro .enter{font-family:var(--mono); font-size:11.5px; letter-spacing:.24em; text-transform:uppercase; color:var(--bone); border:1px solid var(--dust); background:rgba(14,14,13,.4); padding:11px 26px; backdrop-filter:blur(3px)}
+#intro .enter:hover{border-color:var(--neon); color:var(--neon)}
+#intro .hint{font-family:var(--serif); font-style:italic; font-size:13px; color:var(--dust); letter-spacing:.02em}
 
 /* ── ticker ───────────────────────────────────────────────────────────── */
 .ticker-wrap{width:100%; overflow:hidden; background:var(--bone); color:var(--black); border-bottom:1px solid var(--dust)}
+.checkerstrip{width:100%; height:9px; background-image:repeating-conic-gradient(var(--black) 0% 25%, var(--bone) 0% 50%); background-size:18px 18px; border-bottom:1px solid var(--dust)}
+/* industrial hazard-stripe dividers — used only where it matters most */
+.hazard{position:relative}
+.hazard::before{content:""; position:absolute; top:0; left:0; right:0; height:5px; background:repeating-linear-gradient(135deg, var(--black) 0 9px, var(--neon) 9px 18px)}
 .ticker{display:inline-block; white-space:nowrap; padding-right:100%; animation:ticker 26s linear infinite}
-.ticker__item{display:inline-block; padding:5px 2rem; font-size:10.5px; text-transform:uppercase; letter-spacing:.14em; font-weight:500}
+.ticker__item{display:inline-block; padding:5px 2rem; font-size:10.5px; text-transform:uppercase; letter-spacing:.2em; font-weight:700}
 @keyframes ticker{0%{transform:translate3d(0,0,0)}100%{transform:translate3d(-100%,0,0)}}
 
 /* ── header / nav ─────────────────────────────────────────────────────── */
@@ -76,12 +86,12 @@ header.top{padding:28px 0 18px}
 .wordmark{font-family:var(--serif); font-weight:700; font-size:26px; letter-spacing:.02em; text-decoration:none; display:flex; align-items:baseline; gap:.4ch}
 .wordmark em{font-style:italic; font-weight:400; color:var(--pink)}
 nav.bnav{display:flex; gap:6px; flex-wrap:wrap}
-.blink{font-size:11px; text-transform:uppercase; letter-spacing:.12em; padding:7px 12px; border:1px solid transparent}
+.blink{font-size:11px; text-transform:uppercase; letter-spacing:.16em; font-weight:600; padding:7px 12px; border:1px solid transparent}
 .blink:hover{color:var(--pink); text-decoration:line-through; text-decoration-color:var(--bone); text-decoration-thickness:2px}
 .blink.on{border-color:var(--dust); color:var(--pink)}
 
 /* ── control strip ────────────────────────────────────────────────────── */
-.controls{padding:26px 0 6px; border-top:1.5px solid var(--concrete); margin-top:18px}
+.controls{padding:31px 0 6px; margin-top:18px}
 .searchrow{display:flex; gap:18px; align-items:flex-end; flex-wrap:wrap}
 .search{flex:1; min-width:200px; position:relative}
 .search input{width:100%; background:transparent; border:none; border-bottom:1px solid var(--dust); color:var(--bone); font-size:13px; padding:8px 2px; text-transform:uppercase; letter-spacing:.06em}
@@ -110,7 +120,7 @@ select.uf option{color:#000}
 .chip:hover{color:var(--bone); border-color:var(--bone)}
 .chip.active{background:var(--pink); border-color:var(--pink); color:var(--black)}
 
-.resultline{display:flex; align-items:center; justify-content:space-between; gap:12px; margin:28px 0 8px; padding-top:16px; border-top:1.5px solid var(--concrete)}
+.resultline{display:flex; align-items:center; justify-content:space-between; gap:12px; margin:28px 0 8px; padding-top:20px}
 .count{font-size:11px; color:var(--dust); text-transform:uppercase; letter-spacing:.08em}
 .count b{color:var(--bone); font-weight:500}
 .viewtoggle{display:flex; gap:0; border:1px solid var(--dust)}
@@ -122,7 +132,8 @@ select.uf option{color:#000}
 @media(min-width:640px){.masonry{grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:3rem 2rem}}
 .polaroid{position:relative; background:var(--bone); padding:1rem 1rem 3.4rem 1rem; border:1px solid var(--bone-dim);
   box-shadow:0 10px 26px rgba(0,0,0,.5), inset 0 0 30px rgba(255,255,255,.5);
-  cursor:pointer; text-align:left; width:100%; color:var(--ink); transition:transform .4s cubic-bezier(.25,.46,.45,.94); will-change:transform}
+  cursor:pointer; text-align:left; width:100%; color:var(--ink); transition:transform .4s cubic-bezier(.25,.46,.45,.94); will-change:transform;
+  clip-path:polygon(0 0, 100% 0, 100% 100%, 14px 100%, 0 calc(100% - 14px))}
 @media(min-width:640px){.polaroid:nth-child(even){margin-top:2.4rem} .polaroid:nth-child(3n){margin-top:-1rem}}
 .polaroid-photo{position:relative; width:100%; aspect-ratio:4/5; background:linear-gradient(135deg,var(--asphalt),var(--asphalt-2)); overflow:hidden; border:1px solid #000}
 .polaroid-photo img{width:100%; height:100%; object-fit:cover; opacity:0; transition:opacity .5s ease}
@@ -242,7 +253,7 @@ footer.techfoot{border-top:1.5px solid var(--concrete); margin-top:5rem; padding
 
 @media(prefers-reduced-motion:reduce){
   *{animation:none!important; transition:none!important}
-  #loader{display:none!important}
+  #intro{display:none!important}
 }
 </style>
 </head>
@@ -250,14 +261,22 @@ footer.techfoot{border-top:1.5px solid var(--concrete); margin-top:5rem; padding
 
 <div class="grain" aria-hidden="true"></div>
 
-<div id="loader" aria-hidden="true">
-  <div class="bath"></div>
-  <h1>BPM CLOSET</h1>
+<div id="intro" role="button" aria-label="Enter the archive" tabindex="0">
+  <video autoplay muted loop playsinline preload="auto">
+    <source src="intro.mp4" type="video/mp4" />
+  </video>
+  <div class="veil"></div>
+  <div class="logo-wrap">
+    <img src="logo-bpm.png" alt="BPM closet" />
+    <button class="enter">Enter the archive</button>
+    <span class="hint">— tap anywhere to continue —</span>
+  </div>
 </div>
 
 <div class="ticker-wrap">
   <div class="ticker" id="ticker"></div>
 </div>
+<div class="checkerstrip" aria-hidden="true"></div>
 
 <header class="top">
   <div class="wrap top-row">
@@ -270,7 +289,7 @@ footer.techfoot{border-top:1.5px solid var(--concrete); margin-top:5rem; padding
     </nav>
   </div>
 
-  <div class="wrap controls">
+  <div class="wrap controls hazard">
     <div class="searchrow">
       <div class="search">
         <input id="q" type="search" placeholder="Search the archive…" autocomplete="off" />
@@ -304,7 +323,7 @@ footer.techfoot{border-top:1.5px solid var(--concrete); margin-top:5rem; padding
 
     <div class="chips" id="chips"></div>
 
-    <div class="resultline">
+    <div class="resultline hazard">
       <div class="count" id="count"></div>
       <div class="viewtoggle" role="group" aria-label="View">
         <button id="viewGrid" class="active">Grid</button>
@@ -384,7 +403,7 @@ const SEED_DATA = [
 
 /* ── logic (no need to edit below) ───────────────────────────────────── */
 const COLORS={"black":"#1b1b1b","white":"#f7f7f5","grey":"#9ca3af","gray":"#9ca3af","navy":"#1f2a44","blue":"#3257a8","mid blue":"#3f6fb0","denim blue":"#4a6079","red":"#b3261e","burgundy":"#6e2436","pink":"#e6a4b4","green":"#3f6b4a","olive":"#6b6b3a","khaki":"#7c7b52","yellow":"#e3c04b","mustard":"#caa53a","orange":"#cc6b3f","brown":"#6b4f3a","camel":"#c19a6b","beige":"#d8cbb6","cream":"#efe7d6","purple":"#6b4e71","lilac":"#b3a0cf","gold":"#c4a35a","silver":"#c9c9cf"};
-const STATUS={available:["Available","#7a9e7a"],reserved:["Reserved","#C9A79E"],sold:["Sold","#E23B2E"]};
+const STATUS={available:["Available","#7a9e7a"],reserved:["Reserved","#93A6AC"],sold:["Sold","#E23B2E"]};
 const $=s=>document.querySelector(s), $$=s=>Array.from(document.querySelectorAll(s));
 const norm=s=>(s||"").toString().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim();
 const money=n=>CONFIG.currency+Number(n||0).toLocaleString("en-GB",{minimumFractionDigits:2,maximumFractionDigits:2});
@@ -624,9 +643,22 @@ async function boot(){
 }
 boot();
 
-/* Hide the intro loader once the page has painted (skipped entirely if
-   prefers-reduced-motion, via the CSS rule above). */
-setTimeout(()=>{ const l=$("#loader"); if(l){ l.classList.add("hide"); setTimeout(()=>l.remove(),1000); } }, 1000);
+/* Intro gate: click/tap anywhere (or press Enter/Space/Escape) to dismiss.
+   Skipped entirely under prefers-reduced-motion, matching the CSS rule above —
+   in that case we still tidy up so scrolling isn't accidentally locked. */
+(function initIntro(){
+  const el=$("#intro"); if(!el) return;
+  const reduced=matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if(reduced){ el.remove(); return; }
+  document.body.style.overflow="hidden";
+  function dismiss(){
+    el.classList.add("hide");
+    document.body.style.overflow="";
+    setTimeout(()=>{ const v=el.querySelector("video"); if(v){ try{v.pause();}catch(e){} } el.remove(); },1000);
+  }
+  el.addEventListener("click",dismiss);
+  el.addEventListener("keydown",e=>{ if(e.key==="Enter"||e.key===" "||e.key==="Escape"){ e.preventDefault(); dismiss(); } });
+})();
 </script>
 </body>
 </html>
