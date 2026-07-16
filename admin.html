@@ -65,7 +65,7 @@ header.top{position:sticky; top:0; z-index:30; background:rgba(14,14,13,.92); ba
 
 /* sell tab */
 .sellcard{display:flex; gap:14px; align-items:center; background:var(--surface-2); border:1px solid var(--line); padding:12px 14px}
-.sellcard img{width:52px; height:64px; object-fit:cover; border:1px solid #000; flex:none}
+.sellcard img{width:52px; height:64px; object-fit:cover; object-position:center top; border:1px solid #000; flex:none}
 .sellcard .sn{font-family:var(--serif); font-weight:700; font-size:14.5px}
 .sellcard .sb{font-size:11px; color:var(--muted); margin-top:2px; text-transform:uppercase; letter-spacing:.05em}
 .sellcard .sp{margin-left:auto; font-weight:700; font-size:15px}
@@ -113,6 +113,7 @@ section.block:first-of-type .h{border-top:none; padding-top:0}
 .metric .v{font-family:var(--serif); font-size:24px; font-weight:700; letter-spacing:-.01em; line-height:1.05}
 .metric .k{font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:.07em; margin-top:6px; font-weight:500}
 .metric.accent .v{color:var(--accent)}
+.metric.amber .v{color:var(--amber)}
 .metric .sub{font-size:10px; color:var(--muted); margin-top:3px}
 
 /* dashboard extras */
@@ -192,7 +193,7 @@ select.in option{color:#111110; background:#EDEBE4}
 .preview-wrap .ptitle{font-size:10.5px; font-weight:500; color:var(--muted); text-transform:uppercase; letter-spacing:.07em}
 .pcard{border:1px solid #d1ccc5; background:#EDEBE4; padding:.7rem .7rem 2rem .7rem; box-shadow:0 8px 20px rgba(0,0,0,.4)}
 .pthumb{position:relative; aspect-ratio:3/4; background:linear-gradient(135deg,var(--surface),var(--surface-2)); border:1px solid #000}
-.pthumb img{width:100%; height:100%; object-fit:cover}
+.pthumb img{width:100%; height:100%; object-fit:cover; object-position:center top}
 .pbadge{position:absolute; top:9px; left:9px; font-family:var(--serif); font-style:italic; font-weight:700; font-size:11px; letter-spacing:.04em; text-transform:uppercase; padding:4px 9px; border:1.5px solid var(--danger); color:var(--danger); transform:rotate(-8deg)}
 .pmeta{padding:10px .3rem 0}
 .pmeta .pn{font-family:var(--hand); font-size:17px; color:#2b2b2a; line-height:1.1}
@@ -210,7 +211,7 @@ table{width:100%; border-collapse:collapse; font-size:12.5px}
 th{text-align:left; font-size:10px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); font-weight:500; padding:11px 12px; border-bottom:1.5px solid var(--concrete); background:var(--surface-2)}
 td{padding:9px 12px; border-bottom:1px dashed var(--line); vertical-align:middle}
 tr:last-child td{border-bottom:none}
-.tthumb{width:40px; height:50px; object-fit:cover; background:var(--surface-2); border:1px solid #000}
+.tthumb{width:40px; height:50px; object-fit:cover; object-position:center top; background:var(--surface-2); border:1px solid #000}
 .tname{font-family:var(--serif); font-weight:700}
 .tbrand{color:var(--muted); font-size:11px; text-transform:uppercase; letter-spacing:.03em}
 .statussel{height:32px; border:1px solid var(--line); background:var(--bg); color:var(--ink); padding:0 8px; font-size:11.5px; font-family:var(--mono); appearance:none; -webkit-appearance:none}
@@ -226,6 +227,11 @@ tr:last-child td{border-bottom:none}
 .tools .grow{flex:1; min-width:160px}
 
 .toast{position:fixed; bottom:24px; left:50%; transform:translate(-50%,20px); z-index:80; background:#EDEBE4; color:#0E0E0D; padding:11px 20px; font-size:11px; text-transform:uppercase; letter-spacing:.06em; box-shadow:var(--shadow); opacity:0; pointer-events:none; transition:.25s; display:flex; align-items:center; gap:9px}
+
+.updatebar{position:fixed; left:0; right:0; bottom:0; z-index:260; background:var(--danger); color:#EDEBE4; padding:12px 18px; font-size:11.5px; text-transform:uppercase; letter-spacing:.06em; display:none; align-items:center; justify-content:center; gap:16px; flex-wrap:wrap; text-align:center}
+.updatebar.show{display:flex}
+.updatebar button{border:1px solid #EDEBE4; background:transparent; color:#EDEBE4; padding:7px 16px; font-size:10.5px; letter-spacing:.08em}
+.updatebar button:hover{background:#EDEBE4; color:var(--danger)}
 .toast.show{opacity:1; transform:translate(-50%,0); pointer-events:auto}
 .toast svg{width:15px; height:15px}
 .toast .undo{color:var(--danger); font-weight:700; text-decoration:underline; text-underline-offset:3px; cursor:pointer; background:none; border:none; font-size:11px; padding:0; text-transform:uppercase; letter-spacing:.05em}
@@ -428,6 +434,7 @@ footer{margin:52px 0 40px; text-align:center; color:var(--muted); font-size:11px
             </div>
             <div class="field-wrap">
               <label class="checkrow"><input type="checkbox" id="i-new" /> Show “New” badge</label>
+              <label class="checkrow" id="i-hidden-wrap"><input type="checkbox" id="i-hidden" /> Don't show in the shop (commercial-only sale)</label>
             </div>
             <div class="formactions">
               <button class="btn primary" id="btnSave">Add item</button>
@@ -524,6 +531,10 @@ footer{margin:52px 0 40px; text-align:center; color:var(--muted); font-size:11px
               <div class="field-wrap"><label class="lab" for="sn-category">Category</label><input class="in" id="sn-category" list="dl-category" /></div>
               <div class="field-wrap"><label class="lab" for="sn-size">Size</label><input class="in" id="sn-size" list="dl-size" /></div>
               <div class="field-wrap"><label class="lab" for="sn-price">Listed price (€)</label><input class="in" id="sn-price" type="number" min="0" step="0.01" placeholder="what it would've listed for" /></div>
+              <div class="field-wrap full">
+                <label class="checkrow"><input type="checkbox" id="sn-hidden" checked /> Don't show in the shop (commercial-only sale)</label>
+                <div class="hint">Ticked by default — this item was never in your catalogue, so it has nothing to show in the shop. Untick only if you want it to appear there as a sold archive piece.</div>
+              </div>
             </div>
           </div>
 
@@ -598,11 +609,17 @@ footer{margin:52px 0 40px; text-align:center; color:var(--muted); font-size:11px
 </div>
 
 <div class="toast" id="toast"></div>
+<div class="updatebar" id="updateBar">A newer version of this panel is available — reload to avoid working on stale code <button id="btnRefreshNow">Refresh</button></div>
 
 <script>
 /* ╔═══════════════════════════════════════════════════════════════════════╗
    ║   ADMIN CONFIGURATION — edit this                                     ║
    ╚═══════════════════════════════════════════════════════════════════════╝ */
+/* Bumped every time this file is updated. Lets the panel detect it's
+   running a stale cached copy of its own code (separate from items.json
+   staleness, which is already handled elsewhere). */
+const BUILD_ID = "20260716115209";
+
 const ADMIN = {
   // Change this passphrase to something only you know.
   passphrase: "bpm-admin",
@@ -681,6 +698,15 @@ function renderMetrics(){
   const soldPct = n ? Math.round(sold.length/n*100) : 0;
   const negotiatedCount = sold.filter(p=>p.soldPrice!==undefined && p.soldPrice!=="" && Number(p.soldPrice)!==Number(p.price||0)).length;
 
+  // ── inventory aging (available items only, based on listed date) ──
+  const today=new Date();
+  const daysSince=d=>{ if(!d) return null; const n=Math.round((today-new Date(d))/86400000); return n>=0?n:null; };
+  const availAged=avail.map(p=>({p,age:daysSince(p.date)})).filter(x=>x.age!==null);
+  const avgAge = availAged.length ? Math.round(availAged.reduce((s,x)=>s+x.age,0)/availAged.length) : null;
+  const STALE_DAYS=60;
+  const staleItems=availAged.filter(x=>x.age>STALE_DAYS);
+  const staleValue=staleItems.reduce((s,x)=>s+Number(x.p.price||0),0);
+
   // ── top KPI cards ──
   const cards=[
     ["Total items", n, ""],
@@ -688,7 +714,9 @@ function renderMetrics(){
     ["Reserved", reserved.length, ""],
     ["Sold", sold.length, "", soldPct+"% of stock"],
     ["Avg. price (available)", money(avgAvail), ""],
-    ["Sold value", money(soldValue), "", sold.length?"avg "+money(avgSold):""]
+    ["Sold value", money(soldValue), "", sold.length?"avg "+money(avgSold):""],
+    ["Avg. stock age", avgAge!==null?avgAge+"d":"—", "", avgAge!==null?"days since listed":""],
+    ["Stale stock (60d+)", staleItems.length, staleItems.length?"amber":"", staleItems.length?money(staleValue)+" tied up":""]
   ];
   $("#metrics").innerHTML = cards.map(([k,v,c,sub])=>`<div class="metric ${c||""}"><div class="v">${v}</div><div class="k">${k}</div>${sub?`<div class="sub">${sub}</div>`:""}</div>`).join("");
 
@@ -706,7 +734,46 @@ function renderMetrics(){
   }
 
   const byCat=group("category"), byBrand=group("brand"), bySize=group("size");
+  const byCondition=group("condition"), byColor=group("color");
   const sellers=[...new Set(items.map(p=>p.seller).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
+
+  // ── aging buckets (available stock, by days since listed) ──
+  const ageBuckets=[["0–30d",0,30],["31–60d",31,60],["61–90d",61,90],["90d+",91,Infinity]];
+  const agingData=ageBuckets.map(([label,lo,hi])=>{
+    const inBucket=availAged.filter(x=>x.age>=lo && x.age<=hi);
+    return {label, n:inBucket.length, val:inBucket.reduce((s,x)=>s+Number(x.p.price||0),0)};
+  });
+
+  // ── price distribution (available stock) ──
+  const priceBands=[["€0–10",0,10],["€10–25",10,25],["€25–50",25,50],["€50–100",50,100],["€100+",100,Infinity]];
+  const priceDist=priceBands.map(([label,lo,hi])=>avail.filter(p=>Number(p.price)>=lo && Number(p.price)<hi).length);
+
+  // ── sell-through speed: fastest & slowest categories (avg days to sell) ──
+  function avgDaysToSellBy(field){
+    const m={};
+    sold.filter(p=>p.date && p.soldDate).forEach(p=>{
+      const k=(p[field]||"—").trim()||"—"; const days=Math.max(0,(new Date(p.soldDate)-new Date(p.date))/86400000);
+      if(!m[k]) m[k]={sum:0,n:0}; m[k].sum+=days; m[k].n++;
+    });
+    return Object.entries(m).map(([k,v])=>[k, v.sum/v.n, v.n]).sort((a,b)=>a[1]-b[1]);
+  }
+  const speedByCategory=avgDaysToSellBy("category");
+
+  // ── data quality checklist ──
+  const dq=[
+    ["Missing photo", items.filter(p=>!p.photo).length],
+    ["Missing size", items.filter(p=>!p.size).length],
+    ["Missing category", items.filter(p=>!p.category).length],
+    ["Missing color", items.filter(p=>!p.color).length],
+    ["Missing condition", items.filter(p=>!p.condition).length],
+    ["Missing/zero price", items.filter(p=>!p.price || Number(p.price)<=0).length],
+  ];
+
+  // ── inventory flow: added vs sold, per month (last 12) ──
+  const addedByMonth={}; items.forEach(p=>{ const k=(p.date||"").slice(0,7); if(!k) return; addedByMonth[k]=(addedByMonth[k]||0)+1; });
+  const soldByMonth={}; sold.forEach(p=>{ const k=(p.soldDate||p.date||"").slice(0,7); if(!k) return; soldByMonth[k]=(soldByMonth[k]||0)+1; });
+  const flowMonths=[...new Set([...Object.keys(addedByMonth),...Object.keys(soldByMonth)])].sort().slice(-12);
+  const flowLabel=k=>{ const [y,m]=k.split("-"); return new Date(y,m-1,1).toLocaleDateString("en-GB",{month:"short",year:"2-digit"}); };
 
   // ── key facts card ──
   const priced=items.filter(p=>Number(p.price)>0);
@@ -744,11 +811,45 @@ function renderMetrics(){
     if(top) facts.push(["Top seller", esc(top[0])+" · "+money(top[1])]);
   }
 
+  const oldestAvailable=availAged.slice().sort((a,b)=>b.age-a.age).slice(0,10);
+  const sectionDivider=label=>`<div class="dcard wide" style="background:transparent; border:none; box-shadow:none; padding:4px 2px 0; text-align:center"><h3 style="margin:0; font-size:10px; letter-spacing:.14em; color:var(--muted)">— ${label} —</h3></div>`;
+
   $("#dash").innerHTML =
     `<div class="dcard"><h3>By category</h3>${bars(byCat)}</div>`+
     `<div class="dcard"><h3>By brand</h3>${bars(byBrand,0,"b2")}</div>`+
     `<div class="dcard"><h3>By size</h3>${bars(bySize)}</div>`+
     `<div class="dcard"><h3>Key facts</h3>${facts.map(([k,v])=>`<div class="kv"><span class="k">${k}</span><span class="v">${v}</span></div>`).join("")}</div>`+
+
+    sectionDivider("Inventory intelligence")+
+
+    `<div class="dcard wide"><h3>Stock aging (available items)</h3>
+       <div class="chartwrap small"><canvas id="chartAging"></canvas></div>
+       ${staleItems.length ? `<div class="dnote" style="text-align:left; padding:10px 0 0">${staleItems.length} item(s) have been listed over ${STALE_DAYS} days — ${money(staleValue)} tied up. See the table below.</div>` : `<div class="dnote">Nothing older than ${STALE_DAYS} days — nicely turned over</div>`}
+     </div>`+
+
+    `<div class="dcard"><h3>Price distribution (available)</h3><div class="chartwrap small"><canvas id="chartPriceDist"></canvas></div></div>`+
+
+    `<div class="dcard"><h3>By condition</h3>${bars(byCondition)}</div>`+
+    `<div class="dcard"><h3>By colour</h3>${bars(byColor,0,"b2")}</div>`+
+
+    (speedByCategory.length ? `<div class="dcard"><h3>Sells fastest / slowest (avg days, by category)</h3>
+       ${speedByCategory.slice(0,3).map(([k,d,n])=>`<div class="kv"><span class="k">⚡ ${esc(k)}</span><span class="v">${Math.round(d)}d <span style="color:var(--muted); font-weight:400">(${n})</span></span></div>`).join("")}
+       ${speedByCategory.length>3?`<div class="kv" style="border-top:1.5px solid var(--concrete); margin-top:4px; padding-top:10px"><span class="k">…</span><span class="v"></span></div>`:""}
+       ${speedByCategory.slice(-3).reverse().map(([k,d,n])=>`<div class="kv"><span class="k">🐢 ${esc(k)}</span><span class="v">${Math.round(d)}d <span style="color:var(--muted); font-weight:400">(${n})</span></span></div>`).join("")}
+     </div>` : `<div class="dcard"><h3>Sells fastest / slowest</h3><div class="dnote">Needs a few sales with both listed and sold dates</div></div>`)+
+
+    `<div class="dcard"><h3>Data quality</h3>${dq.map(([k,v])=>`<div class="kv"><span class="k">${k}</span><span class="v" style="${v?'color:var(--amber)':''}">${v}</span></div>`).join("")}</div>`+
+
+    (flowMonths.length ? `<div class="dcard wide"><h3>Inventory flow — added vs. sold, per month</h3><div class="chartwrap"><canvas id="chartFlow"></canvas></div></div>` : "")+
+
+    (oldestAvailable.length ? `<div class="dcard wide"><h3>Oldest available items</h3>
+       <table class="mtable"><thead><tr><th>Item</th><th>Brand</th><th style="text-align:right">Age</th><th style="text-align:right">Price</th></tr></thead><tbody>
+       ${oldestAvailable.map(x=>`<tr><td>${esc(x.p.name||"—")}</td><td>${esc(x.p.brand||"—")}</td><td style="text-align:right">${x.age}d</td><td class="p">${money(x.p.price)}</td></tr>`).join("")}
+       </tbody></table>
+     </div>` : "")+
+
+    sectionDivider("Sales &amp; people")+
+
     `<div class="dcard wide"><h3>Explore by brand</h3>
        <div class="brandpick"><select class="in" id="brandPick"><option value="">Choose a brand…</option>${byBrand.map(([b])=>`<option value="${esc(b)}">${esc(b)}</option>`).join("")}</select></div>
        <div id="brandStats"></div>
@@ -766,6 +867,40 @@ function renderMetrics(){
        <div id="monthDetail"></div>
        <div id="monthly"></div>
      </div>`;
+
+  // aging chart
+  ensureChart("#chartAging", {
+    type:"bar",
+    data:{ labels:agingData.map(a=>a.label), datasets:[{ label:"Items", data:agingData.map(a=>a.n), backgroundColor:agingData.map((a,i)=>i===agingData.length-1?"#E23B2E":"#C9A79E"), borderRadius:0, maxBarThickness:36 }] },
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:false },
+        tooltip:{ callbacks:{ label:ctx=>ctx.parsed.y+" item(s) · "+money(agingData[ctx.dataIndex].val) } } },
+      scales:{ y:{ beginAtZero:true, ticks:{ font:{size:11,family:"'JetBrains Mono',monospace"}, color:"#9b958c", precision:0 }, grid:{ color:"#3a3a37" } },
+               x:{ ticks:{ font:{size:11,family:"'JetBrains Mono',monospace"}, color:"#9b958c" }, grid:{ display:false } } } }
+  });
+
+  // price distribution chart
+  ensureChart("#chartPriceDist", {
+    type:"bar",
+    data:{ labels:priceBands.map(b=>b[0]), datasets:[{ label:"Items", data:priceDist, backgroundColor:"#7c93c4", borderRadius:0, maxBarThickness:36 }] },
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:false } },
+      scales:{ y:{ beginAtZero:true, ticks:{ font:{size:11,family:"'JetBrains Mono',monospace"}, color:"#9b958c", precision:0 }, grid:{ color:"#3a3a37" } },
+               x:{ ticks:{ font:{size:11,family:"'JetBrains Mono',monospace"}, color:"#9b958c" }, grid:{ display:false } } } }
+  });
+
+  // inventory flow chart (added vs sold)
+  if(flowMonths.length){
+    ensureChart("#chartFlow", {
+      type:"bar",
+      data:{ labels:flowMonths.map(flowLabel), datasets:[
+        { label:"Added", data:flowMonths.map(k=>addedByMonth[k]||0), backgroundColor:"#9b958c", borderRadius:0, maxBarThickness:20 },
+        { label:"Sold", data:flowMonths.map(k=>soldByMonth[k]||0), backgroundColor:"#C9A79E", borderRadius:0, maxBarThickness:20 }
+      ] },
+      options:{ responsive:true, maintainAspectRatio:false,
+        plugins:{ legend:{ position:"top", labels:{ color:"#9b958c", font:{size:11,family:"'JetBrains Mono',monospace"}, boxWidth:12 } } },
+        scales:{ y:{ beginAtZero:true, ticks:{ font:{size:11,family:"'JetBrains Mono',monospace"}, color:"#9b958c", precision:0 }, grid:{ color:"#3a3a37" } },
+                 x:{ ticks:{ font:{size:11,family:"'JetBrains Mono',monospace"}, color:"#9b958c" }, grid:{ display:false } } } }
+    });
+  }
 
   // brand explorer wiring
   const bp=$("#brandPick");
@@ -936,7 +1071,7 @@ function renderTable(){
     const st = STATUS[p.status]||["—","var(--muted)"];
     return `<tr>
       <td><img class="tthumb" loading="lazy" referrerpolicy="no-referrer" src="${img}" onerror="this.src='${placeholder(p.color,p.category)}'" alt=""></td>
-      <td><div class="tname">${esc(p.name||"(no name)")}</div><div class="tbrand">${esc(p.brand||"")}${p.status==="sold"&&p.seller?` · sold via ${esc(p.seller)}`:""}</div></td>
+      <td><div class="tname">${esc(p.name||"(no name)")}${p.hiddenFromShop?` <span style="color:var(--danger); font-size:10px; text-transform:uppercase; letter-spacing:.04em; border:1px solid var(--danger); padding:1px 6px; margin-left:4px">not in shop</span>`:""}</div><div class="tbrand">${esc(p.brand||"")}${p.status==="sold"&&p.seller?` · sold via ${esc(p.seller)}`:""}</div></td>
       <td class="colhide">${esc(p.size||"–")}</td>
       <td class="colhide">${p.status==="sold"?priceCell(p):money(p.price)}</td>
       <td>
@@ -998,7 +1133,8 @@ function readForm(){
     soldPrice: editing && $("#i-status").value==="sold" && $("#i-soldprice").value!=="" ? Number($("#i-soldprice").value) : "",
     seller: editing && $("#i-status").value==="sold" ? $("#i-seller").value.trim() : "",
     commissionPct: editing && $("#i-status").value==="sold" && $("#i-commission").value!=="" ? Number($("#i-commission").value) : "",
-    isNew:$("#i-new").checked
+    isNew:$("#i-new").checked,
+    hiddenFromShop:$("#i-hidden").checked
   };
 }
 function toggleSoldFields(){
@@ -1015,6 +1151,7 @@ function fillForm(p){
   $("#i-size").value=p.size||""; $("#i-category").value=p.category||""; $("#i-color").value=p.color||"";
   $("#i-condition").value=p.condition||""; $("#i-price").value=(p.price??""); $("#i-status").value=p.status||"available";
   $("#i-vinted").value=p.vintedLink||""; $("#i-notes").value=p.notes||""; $("#i-date").value=p.date||""; $("#i-new").checked=!!p.isNew;
+  $("#i-hidden").checked=!!p.hiddenFromShop;
   $("#i-solddate").value=p.soldDate||""; $("#i-soldprice").value=(p.soldPrice??"");
   $("#i-seller").value=p.seller||""; $("#i-commission").value=(p.commissionPct??"");
   toggleSoldFields();
@@ -1023,7 +1160,7 @@ function fillForm(p){
 function resetForm(keepSticky=false){
   const keep = keepSticky ? { brand:$("#i-brand").value, category:$("#i-category").value, condition:$("#i-condition").value, date:$("#i-date").value } : null;
   ["#i-photo","#i-name","#i-brand","#i-size","#i-category","#i-color","#i-condition","#i-price","#i-vinted","#i-notes","#i-solddate","#i-soldprice","#i-seller","#i-commission"].forEach(s=>$(s).value="");
-  $("#i-status").value="available"; $("#i-new").checked=false;
+  $("#i-status").value="available"; $("#i-new").checked=false; $("#i-hidden").checked=false;
   $("#i-date").value=new Date().toISOString().slice(0,10);
   if(keep){ $("#i-brand").value=keep.brand; $("#i-category").value=keep.category; $("#i-condition").value=keep.condition; if(keep.date) $("#i-date").value=keep.date; }
   editIndex=-1;
@@ -1080,11 +1217,11 @@ function dupItem(idx){ const copy={...items[idx], name:(items[idx].name||"Item")
 window.editItem=editItem; window.deleteItem=deleteItem; window.quickStatus=quickStatus; window.dupItem=dupItem;
 
 /* ── CSV helpers ──────────────────────────────────────────────────────── */
-const CSV_COLS=["photo","name","brand","size","category","color","condition","price","status","vintedLink","notes","date","soldDate","soldPrice","seller","commissionPct","isNew"];
+const CSV_COLS=["photo","name","brand","size","category","color","condition","price","status","vintedLink","notes","date","soldDate","soldPrice","seller","commissionPct","isNew","hiddenFromShop"];
 function csvCell(v){ v=(v==null?"":String(v)); return /[",\n]/.test(v) ? '"'+v.replace(/"/g,'""')+'"' : v; }
 function toCSV(list){
   const head=CSV_COLS.join(",");
-  const body=list.map(p=>CSV_COLS.map(c=> c==="isNew" ? (p.isNew?"true":"") : csvCell(p[c])).join(",")).join("\n");
+  const body=list.map(p=>CSV_COLS.map(c=> (c==="isNew"||c==="hiddenFromShop") ? (p[c]?"true":"") : csvCell(p[c])).join(",")).join("\n");
   return head+"\n"+body;
 }
 function parseCSV(text){
@@ -1105,7 +1242,8 @@ function parseCSV(text){
       vintedLink:o.vintedLink||o.vinted||"", notes:o.notes||"", date:o.date||"", soldDate:o.soldDate||"",
       soldPrice:o.soldPrice?Number(o.soldPrice):"",
       seller:o.seller||"", commissionPct:o.commissionPct?Number(o.commissionPct):"",
-      isNew:/^(true|1|yes|si|sí)$/i.test(o.isNew||"")
+      isNew:/^(true|1|yes|si|sí)$/i.test(o.isNew||""),
+      hiddenFromShop:/^(true|1|yes|si|sí)$/i.test(o.hiddenFromShop||"")
     };
   });
 }
@@ -1193,8 +1331,8 @@ function downloadExcelReport(){
   XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(sellerRows), "By seller");
 
   // Sheet 6 — Full current inventory
-  const invRows=[["Item","Brand","Category","Size","Color","Condition","Price (€)","Status","Listed on","Sold on","Sold price (€)","Seller","Commission (%)","Vinted link","Notes"]].concat(
-    items.map(p=>[p.name||"", p.brand||"", p.category||"", p.size||"", p.color||"", p.condition||"", Number(p.price||0), p.status||"", p.date||"", p.soldDate||"", p.soldPrice!==undefined&&p.soldPrice!==""?Number(p.soldPrice):"", p.seller||"", p.commissionPct!==undefined&&p.commissionPct!==""?Number(p.commissionPct):"", p.vintedLink||"", p.notes||""]));
+  const invRows=[["Item","Brand","Category","Size","Color","Condition","Price (€)","Status","In shop?","Listed on","Sold on","Sold price (€)","Seller","Commission (%)","Vinted link","Notes"]].concat(
+    items.map(p=>[p.name||"", p.brand||"", p.category||"", p.size||"", p.color||"", p.condition||"", Number(p.price||0), p.status||"", p.hiddenFromShop?"No":"Yes", p.date||"", p.soldDate||"", p.soldPrice!==undefined&&p.soldPrice!==""?Number(p.soldPrice):"", p.seller||"", p.commissionPct!==undefined&&p.commissionPct!==""?Number(p.commissionPct):"", p.vintedLink||"", p.notes||""]));
   XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(invRows), "Full inventory");
 
   const stamp=new Date().toISOString().slice(0,10);
@@ -1370,6 +1508,7 @@ function onSellPick(){
 function resetSellFields(){
   $("#sellPick").value=""; $("#sellDetails").style.display="none"; $("#sellCardWrap").style.display="none";
   ["#sn-photo","#sn-name","#sn-brand","#sn-category","#sn-size","#sn-price","#s-price","#s-seller","#s-commission"].forEach(s=>$(s).value="");
+  $("#sn-hidden").checked=true; // default back on for the next quick sale
   $("#s-keep").style.display="none";
 }
 function commitSale(){
@@ -1397,7 +1536,7 @@ function commitSale(){
       soldDate:$("#s-date").value||new Date().toISOString().slice(0,10),
       soldPrice, seller:$("#s-seller").value.trim(),
       commissionPct: $("#s-seller").value.trim() && $("#s-commission").value!=="" ? Number($("#s-commission").value) : "",
-      isNew:false
+      isNew:false, hiddenFromShop:$("#sn-hidden").checked
     });
   }
   markDirty(true); saveLocal(); refreshAll();
@@ -1496,6 +1635,25 @@ $("#i-status").addEventListener("change",()=>{ toggleSoldFields(); renderPreview
 
 /* If already unlocked in this tab session, skip the gate */
 (function(){ let ok=false; try{ ok=sessionStorage.getItem(SES_KEY)==="1"; }catch(e){} if(ok) unlock(); else $("#pass").focus(); })();
+
+/* ── Stale-page detector ───────────────────────────────────────────────
+   Same purpose as the shop's version: GitHub Pages can serve a cached
+   copy of this panel's own code for a while after a publish. This checks
+   a tiny build.txt (always fetched fresh) against this copy's BUILD_ID —
+   if they differ, you're looking at old code, which is exactly the kind
+   of thing that caused the confusing 409/caching saga earlier. Doesn't
+   touch your local working data — it only offers to reload the code. */
+async function checkForFreshBuild(){
+  try{
+    const r=await fetch("build.txt?v="+Date.now(),{cache:"no-store"});
+    if(!r.ok) return;
+    const latest=(await r.text()).trim();
+    if(latest && latest!==BUILD_ID) $("#updateBar").classList.add("show");
+  }catch(e){ /* offline or blocked — fail silent, not critical */ }
+}
+$("#btnRefreshNow").addEventListener("click",()=>{ location.href = location.pathname + "?v=" + Date.now(); });
+checkForFreshBuild();
+setInterval(checkForFreshBuild, 60000);
 </script>
 </body>
 </html>
